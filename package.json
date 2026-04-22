@@ -1,0 +1,27 @@
+{
+  "name": "nse-news-to-startup-engine",
+  "version": "1.0.0",
+  "description": "AI-powered global intelligence system that detects emerging problems and converts them into validated startup opportunities",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "ai-engine"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

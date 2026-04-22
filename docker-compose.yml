@@ -1,0 +1,101 @@
+version: '3.9'
+
+services:
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: nse-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nse
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-nse_secret_2025}
+      MONGO_INITDB_DATABASE: nse
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/seeds:/docker-entrypoint-initdb.d
+    networks:
+      - nse-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: nse-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nse_redis_2025}
+    volumes:
+      - redis_data:/data
+    networks:
+      - nse-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Backend ──────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nse-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4000
+      MONGODB_URI: mongodb://nse:${MONGO_PASSWORD:-nse_secret_2025}@mongodb:27017/nse?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-nse_redis_2025}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production_256bit_secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NEWS_API_KEY: ${NEWS_API_KEY:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      ENABLE_INGESTION: "true"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nse-network
+    volumes:
+      - backend_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000/api}
+    container_name: nse-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nse-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  backend_logs:
+
+networks:
+  nse-network:
+    driver: bridge

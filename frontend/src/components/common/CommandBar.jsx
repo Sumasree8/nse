@@ -4,33 +4,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Lightbulb, Radio, Hammer, BookMarked, LayoutDashboard, X, ArrowRight } from 'lucide-react';
 
 const COMMANDS = [
-  { id: 'dashboard', label: 'Go to Dashboard', icon: LayoutDashboard, path: '/app', category: 'Navigate' },
-  { id: 'ideas', label: 'Browse Opportunities', icon: Lightbulb, path: '/app/ideas', category: 'Navigate' },
-  { id: 'signals', label: 'View Live Signals', icon: Radio, path: '/app/signals', category: 'Navigate' },
-  { id: 'builder', label: 'Open Builder Mode', icon: Hammer, path: '/app/builder', category: 'Navigate' },
-  { id: 'watchlist', label: 'My Watchlist', icon: BookMarked, path: '/app/watchlist', category: 'Navigate' },
-  { id: 'gen-fintech', label: 'Generate FinTech Idea', icon: Lightbulb, path: '/app/builder?industry=FinTech', category: 'Generate' },
-  { id: 'gen-health', label: 'Generate HealthTech Idea', icon: Lightbulb, path: '/app/builder?industry=HealthTech', category: 'Generate' },
-  { id: 'gen-ai', label: 'Generate AI/ML Idea', icon: Lightbulb, path: '/app/builder?industry=AI+%2F+ML', category: 'Generate' },
-  { id: 'gen-climate', label: 'Generate Climate Tech Idea', icon: Lightbulb, path: '/app/builder?industry=Climate+Tech', category: 'Generate' },
+  { id: 'dashboard', label: 'Go to Dashboard',       icon: LayoutDashboard, path: '/app',                     category: 'Navigate' },
+  { id: 'ideas',     label: 'Browse Opportunities',  icon: Lightbulb,       path: '/app/ideas',               category: 'Navigate' },
+  { id: 'signals',   label: 'View Live Signals',     icon: Radio,           path: '/app/signals',             category: 'Navigate' },
+  { id: 'builder',   label: 'Open Builder Mode',     icon: Hammer,          path: '/app/builder',             category: 'Navigate' },
+  { id: 'watchlist', label: 'My Watchlist',          icon: BookMarked,      path: '/app/watchlist',           category: 'Navigate' },
+  { id: 'g-fintech', label: 'Generate FinTech Idea', icon: Lightbulb,       path: '/app/builder?industry=FinTech',      category: 'Generate' },
+  { id: 'g-health',  label: 'Generate HealthTech',   icon: Lightbulb,       path: '/app/builder?industry=HealthTech',   category: 'Generate' },
+  { id: 'g-ai',      label: 'Generate AI/ML Idea',   icon: Lightbulb,       path: '/app/builder?industry=AI+%2F+ML',    category: 'Generate' },
+  { id: 'g-climate', label: 'Generate Climate Tech', icon: Lightbulb,       path: '/app/builder?industry=Climate+Tech', category: 'Generate' },
 ];
 
 export default function CommandBar() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [open, setOpen]       = useState(false);
+  const [query, setQuery]     = useState('');
   const [selected, setSelected] = useState(0);
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
   useEffect(() => {
-    const handleKey = (e) => {
+    const onKey   = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setOpen(v => !v); }
       if (e.key === 'Escape') setOpen(false);
     };
-    const handleEvent = () => setOpen(true);
-    document.addEventListener('keydown', handleKey);
-    document.addEventListener('openCommandBar', handleEvent);
-    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('openCommandBar', handleEvent); };
+    const onEvent = () => setOpen(true);
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('openCommandBar', onEvent);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('openCommandBar', onEvent); };
   }, []);
 
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 50); }, [open]);
@@ -44,7 +44,7 @@ export default function CommandBar() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(v => Math.min(v + 1, filtered.length - 1)); }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setSelected(v => Math.max(v - 1, 0)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(v => Math.max(v - 1, 0)); }
     if (e.key === 'Enter' && filtered[selected]) handleSelect(filtered[selected]);
   };
 
@@ -62,51 +62,56 @@ export default function CommandBar() {
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.97 }}
+            initial={{ opacity: 0, y: -16, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.97 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-w-lg mx-4"
-            style={{ background: '#0d1117', border: '1px solid #2a3444', borderRadius: 12, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,136,0.1)' }}
+            className="w-full max-w-lg mx-4 card overflow-hidden"
+            style={{ boxShadow: 'var(--shadow-md)' }}
           >
-            {/* Search input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-surface-3">
-              <Search size={15} className="text-gray-500 flex-shrink-0" />
+            {/* Input */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-default">
+              <Search size={15} className="text-muted flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Search commands, industries, ideas..."
-                className="flex-1 bg-transparent text-gray-200 text-sm outline-none placeholder-gray-600 font-sans"
+                className="flex-1 bg-transparent text-primary text-sm outline-none placeholder-muted font-sans"
               />
-              <button onClick={() => setOpen(false)} className="text-gray-600 hover:text-gray-400 transition-colors">
+              <button onClick={() => setOpen(false)} className="text-muted hover:text-secondary transition-colors">
                 <X size={14} />
               </button>
             </div>
 
             {/* Results */}
-            <div className="max-h-80 overflow-y-auto py-2">
+            <div className="max-h-72 overflow-y-auto py-2">
               {filtered.length === 0 ? (
-                <div className="px-4 py-6 text-center text-gray-600 text-sm">No commands found</div>
+                <div className="px-4 py-6 text-center text-muted text-sm">No commands found</div>
               ) : (
                 Object.entries(grouped).map(([category, cmds]) => (
                   <div key={category}>
-                    <div className="px-4 py-1.5 text-[10px] font-mono font-600 text-gray-600 uppercase tracking-widest">{category}</div>
+                    <div className="px-4 py-1.5 text-[10px] font-mono font-semibold text-muted uppercase tracking-widest">
+                      {category}
+                    </div>
                     {cmds.map((cmd) => {
                       const globalIdx = filtered.indexOf(cmd);
                       const Icon = cmd.icon;
+                      const isActive = globalIdx === selected;
                       return (
                         <button
                           key={cmd.id}
                           onClick={() => handleSelect(cmd)}
                           onMouseEnter={() => setSelected(globalIdx)}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                          style={{ background: globalIdx === selected ? 'rgba(0,255,136,0.08)' : 'transparent' }}
+                          style={{ background: isActive ? 'var(--brand-bg)' : 'transparent' }}
                         >
-                          <Icon size={14} className={globalIdx === selected ? 'text-neon-green' : 'text-gray-500'} />
-                          <span className={`flex-1 text-sm ${globalIdx === selected ? 'text-white' : 'text-gray-400'}`}>{cmd.label}</span>
-                          {globalIdx === selected && <ArrowRight size={12} className="text-neon-green" />}
+                          <Icon size={14} style={{ color: isActive ? 'var(--brand)' : 'var(--text-muted)' }} />
+                          <span className="flex-1 text-sm" style={{ color: isActive ? 'var(--brand)' : 'var(--text-secondary)' }}>
+                            {cmd.label}
+                          </span>
+                          {isActive && <ArrowRight size={12} style={{ color: 'var(--brand)' }} />}
                         </button>
                       );
                     })}
@@ -115,10 +120,11 @@ export default function CommandBar() {
               )}
             </div>
 
-            <div className="px-4 py-2 border-t border-surface-3 flex items-center gap-4 text-[10px] font-mono text-gray-600">
-              <span><kbd className="bg-surface-3 px-1 rounded">↑↓</kbd> navigate</span>
-              <span><kbd className="bg-surface-3 px-1 rounded">↵</kbd> select</span>
-              <span><kbd className="bg-surface-3 px-1 rounded">esc</kbd> close</span>
+            {/* Footer hints */}
+            <div className="px-4 py-2 border-t border-default flex items-center gap-4 text-[10px] font-mono text-muted">
+              <span><kbd className="bg-subtle px-1 rounded">↑↓</kbd> navigate</span>
+              <span><kbd className="bg-subtle px-1 rounded">↵</kbd> select</span>
+              <span><kbd className="bg-subtle px-1 rounded">esc</kbd> close</span>
             </div>
           </motion.div>
         </motion.div>

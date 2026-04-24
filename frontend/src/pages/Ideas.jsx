@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, ArrowUpRight, Bookmark, TrendingUp, Clock, Zap } from 'lucide-react';
-import { ideasAPI } from '../utils/api';
+import { ideasAPI, formatMarketSize } from '../utils/api';
 import ScoreRing from '../components/common/ScoreRing';
 import clsx from 'clsx';
 
@@ -32,7 +32,7 @@ function IdeaCard({ idea }) {
       exit={{ opacity: 0, scale: 0.97 }}
       whileHover={{ y: -2 }}
       onClick={() => navigate(`/app/ideas/${idea._id}`)}
-      className="card p-5 cursor-pointer border border-surface-3 hover:border-surface-4 transition-all duration-200"
+      className="card p-5 cursor-pointer border border-default hover:border-strong transition-all duration-200"
     >
       {/* Top row */}
       <div className="flex items-start gap-4">
@@ -40,17 +40,17 @@ function IdeaCard({ idea }) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             {phase && <span className={`phase-badge ${PHASE_MAP[phase]}`}>{phase}</span>}
-            <span className="text-[10px] font-mono text-gray-600 bg-surface-3 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-mono text-muted bg-subtle px-2 py-0.5 rounded-full">
               {idea.category?.industry}
             </span>
             {idea.isFeatured && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-500/10 text-warning border border-yellow-500/20">
                 ★ Featured
               </span>
             )}
           </div>
           <h3 className="text-sm font-semibold text-white leading-snug">{idea.title}</h3>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{idea.tagline}</p>
+          <p className="text-xs text-secondary mt-1 line-clamp-2">{idea.tagline}</p>
         </div>
       </div>
 
@@ -58,13 +58,13 @@ function IdeaCard({ idea }) {
       {idea.scoring?.components && (
         <div className="mt-4 space-y-1.5">
           {[
-            { label: 'Trend', value: idea.scoring.components.trendStrength?.score, color: '#00ff88' },
-            { label: 'Pain', value: idea.scoring.components.painIntensity?.score, color: '#00d4ff' },
-            { label: 'Market', value: idea.scoring.components.marketSize?.score, color: '#bf00ff' },
+            { label: 'Trend', value: idea.scoring.components.trendStrength?.score, color: 'var(--success)' },
+            { label: 'Pain', value: idea.scoring.components.painIntensity?.score, color: 'var(--info)' },
+            { label: 'Market', value: idea.scoring.components.marketSize?.score, color: '#8b5cf6' },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-gray-600 w-10">{label}</span>
-              <div className="flex-1 h-1 bg-surface-3 rounded-full overflow-hidden">
+              <span className="text-[10px] font-mono text-muted w-10">{label}</span>
+              <div className="flex-1 h-1 bg-subtle rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${value || 0}%` }}
@@ -80,34 +80,34 @@ function IdeaCard({ idea }) {
       )}
 
       {/* Bottom row */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-surface-3">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-default">
         <div className="flex items-center gap-4">
           {idea.evidence?.marketData?.tam && (
             <div>
-              <div className="text-[9px] text-gray-600 font-mono uppercase">TAM</div>
-              <div className="text-xs font-mono text-neon-green">{idea.evidence.marketData.tam}</div>
+              <div className="text-[9px] text-muted font-mono uppercase">TAM</div>
+              <div className="text-xs font-mono text-brand">{idea.evidence.marketData.tam}</div>
             </div>
           )}
           {delta !== undefined && (
             <div>
-              <div className="text-[9px] text-gray-600 font-mono uppercase">Delta</div>
-              <div className="text-xs font-mono text-blue-400">{Math.round(delta * 100)}%</div>
+              <div className="text-[9px] text-muted font-mono uppercase">Delta</div>
+              <div className="text-xs font-mono text-info">{Math.round(delta * 100)}%</div>
             </div>
           )}
           <div>
-            <div className="text-[9px] text-gray-600 font-mono uppercase">Risk</div>
+            <div className="text-[9px] text-muted font-mono uppercase">Risk</div>
             <div className={clsx('text-xs font-mono', {
-              'text-neon-green': idea.risks?.overallRisk === 'low',
-              'text-yellow-400': idea.risks?.overallRisk === 'medium',
-              'text-red-400': idea.risks?.overallRisk === 'high' || idea.risks?.overallRisk === 'critical',
+              'text-brand': idea.risks?.overallRisk === 'low',
+              'text-warning': idea.risks?.overallRisk === 'medium',
+              'text-danger': idea.risks?.overallRisk === 'high' || idea.risks?.overallRisk === 'critical',
             })}>
               {idea.risks?.overallRisk || '—'}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 text-[10px] text-gray-600 font-mono">
+        <div className="flex items-center gap-3 text-[10px] text-muted font-mono">
           <span>{idea.views || 0} views</span>
-          <ArrowUpRight size={12} className="text-gray-600" />
+          <ArrowUpRight size={12} className="text-muted" />
         </div>
       </div>
     </motion.div>
@@ -141,7 +141,7 @@ export default function Ideas() {
       {/* Header */}
       <div>
         <h1 className="font-display font-bold text-2xl text-white">Startup Opportunities</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-secondary mt-1">
           {data?.pagination?.total || '—'} validated opportunities ranked by Opportunity Score
         </p>
       </div>
@@ -150,7 +150,7 @@ export default function Ideas() {
       <div className="space-y-3">
         {/* Search */}
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -168,8 +168,8 @@ export default function Ideas() {
               className={clsx(
                 'px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150',
                 industry === ind
-                  ? 'bg-neon-green/10 border-neon-green/40 text-neon-green'
-                  : 'bg-surface-2 border-surface-3 text-gray-500 hover:text-gray-300 hover:border-gray-500'
+                  ? 'bg-brand border-brand/40 text-brand'
+                  : 'bg-card border-default text-secondary hover:text-primary hover:border-gray-500'
               )}
             >
               {ind}
@@ -179,7 +179,7 @@ export default function Ideas() {
 
         {/* Phase + Sort */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 text-xs text-gray-600">
+          <div className="flex items-center gap-1 text-xs text-muted">
             <Filter size={12} />
             <span>Phase:</span>
           </div>
@@ -190,19 +190,19 @@ export default function Ideas() {
               className={clsx(
                 'px-2.5 py-1 rounded text-[11px] font-mono border transition-all',
                 phase === p
-                  ? 'bg-surface-3 border-gray-500 text-gray-200'
-                  : 'border-surface-3 text-gray-600 hover:text-gray-400'
+                  ? 'bg-subtle border-gray-500 text-primary'
+                  : 'border-default text-muted hover:text-secondary'
               )}
             >
               {p}
             </button>
           ))}
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-600">Sort:</span>
+            <span className="text-xs text-muted">Sort:</span>
             <select
               value={sort}
               onChange={e => setSort(e.target.value)}
-              className="bg-surface-2 border border-surface-3 text-gray-400 text-xs rounded px-2 py-1 outline-none focus:border-gray-500"
+              className="bg-card border border-default text-secondary text-xs rounded px-2 py-1 outline-none focus:border-gray-500"
             >
               {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
@@ -216,10 +216,10 @@ export default function Ideas() {
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card p-5 animate-pulse h-64">
               <div className="flex gap-4">
-                <div className="w-14 h-14 rounded-full bg-surface-3" />
+                <div className="w-14 h-14 rounded-full bg-subtle" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-surface-3 rounded w-3/4" />
-                  <div className="h-3 bg-surface-3 rounded w-1/2" />
+                  <div className="h-3 bg-subtle rounded w-3/4" />
+                  <div className="h-3 bg-subtle rounded w-1/2" />
                 </div>
               </div>
             </div>
@@ -227,9 +227,9 @@ export default function Ideas() {
         </div>
       ) : ideas.length === 0 ? (
         <div className="card p-16 text-center">
-          <Zap size={32} className="text-gray-700 mx-auto mb-3" />
-          <div className="text-gray-500 text-sm">No opportunities match your filters</div>
-          <button onClick={() => { setIndustry('All'); setPhase('All'); setSearch(''); }} className="text-neon-green text-xs mt-2 hover:underline">
+          <Zap size={32} className="text-muted mx-auto mb-3" />
+          <div className="text-secondary text-sm">No opportunities match your filters</div>
+          <button onClick={() => { setIndustry('All'); setPhase('All'); setSearch(''); }} className="text-brand text-xs mt-2 hover:underline">
             Clear filters
           </button>
         </div>

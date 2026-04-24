@@ -29,7 +29,7 @@ async function connectDB() {
     });
 
   } catch (err) {
-    logger.error('MongoDB connection failed:', err.message);
+    logger.error('MongoDB connection failed:', err);
     // In development, continue without DB for demo purposes
     if (process.env.NODE_ENV !== 'production') {
       logger.warn('⚠️  Running without MongoDB - using in-memory mock data');

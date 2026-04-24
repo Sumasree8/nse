@@ -1,33 +1,43 @@
 import React from 'react';
 
 function getScoreColor(score) {
-  if (score >= 80) return '#00ff88';
-  if (score >= 65) return '#00d4ff';
-  if (score >= 50) return '#ff9900';
-  return '#ff4444';
+  if (score >= 80) return '#10b981';  // success green
+  if (score >= 65) return '#6366f1';  // brand indigo
+  if (score >= 50) return '#f59e0b';  // warning amber
+  return '#ef4444';                   // danger red
 }
 
 export default function ScoreRing({ score = 0, size = 64, strokeWidth = 4 }) {
-  const color = getScoreColor(score);
-  const radius = (size - strokeWidth * 2) / 2;
+  const color        = getScoreColor(score);
+  const radius       = (size - strokeWidth * 2) / 2;
   const circumference = radius * 2 * Math.PI;
-  const progress = circumference - (score / 100) * circumference;
+  const offset       = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#1f2736" strokeWidth={strokeWidth} />
+    <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
+        {/* Track */}
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke="var(--border)" strokeWidth={strokeWidth}
+        />
+        {/* Progress */}
         <circle
           cx={size / 2} cy={size / 2} r={radius}
           fill="none" stroke={color} strokeWidth={strokeWidth}
           strokeDasharray={circumference}
-          strokeDashoffset={progress}
+          strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1s ease-out', filter: `drop-shadow(0 0 6px ${color}66)` }}
+          style={{ transition: 'stroke-dashoffset 0.9s ease-out' }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="font-mono font-bold" style={{ fontSize: size * 0.28, color }}>{score}</span>
+        <span
+          className="font-mono font-bold tabular-nums"
+          style={{ fontSize: size * 0.27, color }}
+        >
+          {score}
+        </span>
       </div>
     </div>
   );

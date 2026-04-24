@@ -8,3 +8,4 @@ logs/
 *.local
 coverage/
 .nyc_output/
+.env.example

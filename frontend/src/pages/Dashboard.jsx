@@ -25,10 +25,10 @@ function StatCard({ label, value, sub, icon: Icon, color = '#00ff88', delay = 0 
         <div className="p-2 rounded-lg" style={{ background: color + '18' }}>
           <Icon size={16} style={{ color }} />
         </div>
-        <ArrowUpRight size={12} className="text-gray-600" />
+        <ArrowUpRight size={12} className="text-secondary font-medium" />
       </div>
-      <div className="font-display font-bold text-2xl text-white">{value}</div>
-      <div className="text-xs text-gray-500 mt-1">{label}</div>
+      <div className="font-display font-bold text-2xl text-primary">{value}</div>
+      <div className="text-xs text-secondary font-medium mt-1">{label}</div>
       {sub && <div className="text-xs mt-0.5" style={{ color }}>{sub}</div>}
     </motion.div>
   );
@@ -79,21 +79,21 @@ function IdeaCard({ idea, index }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`phase-badge ${PHASE_CLASS[phase]}`}>{phase}</span>
-            <span className="text-[10px] font-mono text-gray-600">
+            <span className="text-[10px] font-mono text-secondary font-medium">
               {idea.category?.industry}
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-gray-100 leading-snug line-clamp-2">{idea.title}</h3>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{idea.tagline}</p>
+          <h3 className="text-sm font-semibold text-secondary leading-snug line-clamp-2">{idea.title}</h3>
+          <p className="text-xs text-secondary font-medium mt-1 line-clamp-1">{idea.tagline}</p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[10px] font-mono text-gray-600">{idea.views || 0} views</span>
-            <span className="text-[10px] font-mono text-gray-600">{idea.saves || 0} saves</span>
+            <span className="text-[10px] font-mono text-secondary">{idea.views || 0} views</span>
+            <span className="text-[10px] font-mono text-second">{idea.saves || 0} saves</span>
             {idea.evidence?.marketData?.tam && (
               <span className="text-[10px] font-mono text-neon-green">TAM {idea.evidence.marketData.tam}</span>
             )}
           </div>
         </div>
-        <ArrowUpRight size={14} className="text-gray-600 flex-shrink-0 mt-1" />
+        <ArrowUpRight size={14} className="text-secondary flex-shrink-0 mt-1" />
       </div>
     </motion.div>
   );
@@ -148,8 +148,8 @@ export default function Dashboard() {
           <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
           <span className="text-xs font-mono text-neon-green tracking-widest uppercase">Intelligence Feed Active</span>
         </div>
-        <h1 className="font-display font-bold text-2xl text-white">Global Signal Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="font-display font-bold text-2xl text-primary">Global Signal Dashboard</h1>
+        <p className="text-sm text-secondary font-medium mt-1">
           Real-time problem detection across {analyticsData?.totalSignals?.toLocaleString() || '—'} signals
         </p>
       </motion.div>
@@ -171,11 +171,11 @@ export default function Dashboard() {
           className="lg:col-span-1 card p-5"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-secondary flex items-center gap-2">
               <Globe size={14} className="text-neon-green" />
               Signal Heatmap
             </h2>
-            <span className="text-[10px] font-mono text-gray-600">LIVE</span>
+            <span className="text-[10px] font-mono text-secondary font-medium">LIVE</span>
           </div>
           <div className="relative" style={{ height: 220 }}>
             {trending.slice(0, 8).map((signal, i) => {
@@ -210,7 +210,7 @@ export default function Dashboard() {
             {[['#00ff88', 'High'], ['#00d4ff', 'Medium'], ['#ff9900', 'Low']].map(([c, l]) => (
               <div key={l} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: c }} />
-                <span className="text-[10px] text-gray-600">{l}</span>
+                <span className="text-[10px] text-secondary font-medium">{l}</span>
               </div>
             ))}
           </div>
@@ -219,7 +219,7 @@ export default function Dashboard() {
         {/* Top Opportunities */}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-secondary flex items-center gap-2">
               <Zap size={14} className="text-neon-green" />
               Top Opportunities
             </h2>
@@ -228,7 +228,7 @@ export default function Dashboard() {
             </button>
           </div>
           {ideas.length === 0 ? (
-            <div className="card p-8 text-center text-gray-600 text-sm">
+            <div className="card p-8 text-center text-secondary text-sm">
               Loading opportunities...
             </div>
           ) : (
@@ -240,7 +240,7 @@ export default function Dashboard() {
       {/* Trending signals strip */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-secondary flex items-center gap-2">
             <AlertTriangle size={14} className="text-yellow-500" />
             High-Friction Signals
           </h2>
@@ -259,15 +259,15 @@ export default function Dashboard() {
               className="card p-4 cursor-pointer glass-hover"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-3 text-gray-400">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-3 text-secondary">
                   {signal.source?.type || 'news'}
                 </span>
                 <span className="text-[10px] font-mono text-neon-green">
                   {Math.round((signal.scoring?.compositeScore || 0.5) * 100)}
                 </span>
               </div>
-              <p className="text-xs font-medium text-gray-200 leading-snug line-clamp-2">{signal.title}</p>
-              <div className="mt-2 text-[10px] text-gray-600">
+              <p className="text-xs font-medium text-secondary leading-snug line-clamp-2">{signal.title}</p>
+              <div className="mt-2 text-[10px] text-secondary">
                 {signal.categorization?.industry}
               </div>
             </motion.div>
@@ -278,7 +278,7 @@ export default function Dashboard() {
       {/* Industry breakdown */}
       {analyticsData?.topIndustries?.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-secondary mb-3 flex items-center gap-2">
             <BarChart2 size={14} className="text-neon-blue" />
             Industry Signal Breakdown
           </h2>
@@ -290,7 +290,7 @@ export default function Dashboard() {
                 const colors = ['#00ff88', '#00d4ff', '#bf00ff', '#ff9900', '#ff6b00', '#ff4444'];
                 return (
                   <div key={ind._id} className="flex items-center gap-3">
-                    <div className="w-28 text-xs text-gray-400 truncate font-mono">{ind._id || 'General'}</div>
+                    <div className="w-28 text-xs text-secondary truncate font-mono">{ind._id || 'General'}</div>
                     <div className="flex-1 h-1.5 bg-surface-3 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
@@ -300,7 +300,7 @@ export default function Dashboard() {
                         style={{ background: colors[i % colors.length] }}
                       />
                     </div>
-                    <div className="w-8 text-right text-[10px] font-mono text-gray-500">{ind.count}</div>
+                    <div className="w-8 text-right text-[10px] font-mono text-secondary">{ind.count}</div>
                   </div>
                 );
               })}

@@ -82,3 +82,85 @@ export const usersAPI = {
 };
 
 export default api;
+
+// ── Currency Formatter ───────────────────────────────────────────────────────
+// Maps country code → { locale, currency, symbol }
+const CURRENCY_MAP = {
+  IN: { locale: 'en-IN', currency: 'INR', symbol: '₹' },
+  US: { locale: 'en-US', currency: 'USD', symbol: '$' },
+  GB: { locale: 'en-GB', currency: 'GBP', symbol: '£' },
+  EU: { locale: 'de-DE', currency: 'EUR', symbol: '€' },
+  JP: { locale: 'ja-JP', currency: 'JPY', symbol: '¥' },
+  CN: { locale: 'zh-CN', currency: 'CNY', symbol: '¥' },
+  AU: { locale: 'en-AU', currency: 'AUD', symbol: 'A$' },
+  CA: { locale: 'en-CA', currency: 'CAD', symbol: 'C$' },
+  SG: { locale: 'en-SG', currency: 'SGD', symbol: 'S$' },
+  AE: { locale: 'ar-AE', currency: 'AED', symbol: 'د.إ' },
+  BR: { locale: 'pt-BR', currency: 'BRL', symbol: 'R$' },
+  DE: { locale: 'de-DE', currency: 'EUR', symbol: '€' },
+  FR: { locale: 'fr-FR', currency: 'EUR', symbol: '€' },
+};
+
+// Exchange rates vs USD (approximate — replace with live API in production)
+const USD_RATES = {
+  INR: 83.5,
+  GBP: 0.79,
+  EUR: 0.92,
+  JPY: 149.5,
+  CNY: 7.24,
+  AUD: 1.53,
+  CAD: 1.36,
+  SGD: 1.34,
+  AED: 3.67,
+  BRL: 4.97,
+  USD: 1,
+};
+
+// Detect user country from browser locale (best-effort, no API needed)
+function detectCountry() {
+  try {
+    const locale = navigator.language || navigator.languages?.[0] || 'en-US';
+    // e.g. "en-IN" → "IN", "hi-IN" → "IN"
+    const tag = new Intl.Locale(locale);
+    return tag.region || 'US';
+  } catch {
+    return 'US';
+  }
+}
+
+const USER_COUNTRY = detectCountry();
+const CURR = CURRENCY_MAP[USER_COUNTRY] || CURRENCY_MAP['US'];
+
+/**
+ * Convert a USD market-size string like "$19.3B" or "$420M"
+ * into the user's local currency.
+ *
+ * Usage:
+ *   formatMarketSize("$19.3B")  →  "₹1,616.6B"   (India)
+ *   formatMarketSize("$420M")   →  "₹35,070M"     (India)
+ */
+export function formatMarketSize(usdStr) {
+  if (!usdStr || typeof usdStr !== 'string') return usdStr;
+
+  // Already non-USD or no dollar sign → return as-is
+  if (!usdStr.startsWith('$')) return usdStr;
+
+  const match = usdStr.match(/^\$([\d,.]+)\s*([BMT]?)/i);
+  if (!match) return usdStr;
+
+  const num    = parseFloat(match[1].replace(/,/g, ''));
+  const suffix = match[2]?.toUpperCase() || '';
+
+  const rate        = USD_RATES[CURR.currency] || 1;
+  const converted   = num * rate;
+
+  // Format with locale
+  const formatted = new Intl.NumberFormat(CURR.locale, {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  }).format(converted);
+
+  return `${CURR.symbol}${formatted}${suffix}`;
+}
+
+export { USER_COUNTRY, CURR };

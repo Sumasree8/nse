@@ -1,7 +1,9 @@
 const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  // Honor an explicit status set via res.status(); otherwise fall back to an
+  // error-carried statusCode/status, then a generic 500.
+  const statusCode = res.statusCode === 200 ? (err.statusCode || err.status || 500) : res.statusCode;
 
   logger.error({
     message: err.message,

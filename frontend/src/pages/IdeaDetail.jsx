@@ -73,11 +73,11 @@ function EvidenceTab({ idea }) {
       {/* Market data */}
       {market && (
         <div className="card p-5">
-          <h3 className="text-sm font-semibold text-primary mb-4 flex items-center gap-2">
+          <h3 className="font-display text-sm font-semibold text-primary mb-4 flex items-center gap-2">
             <TrendingUp size={14} className="text-brand" /> Market Size
           </h3>
           <div className="grid grid-cols-3 gap-4">
-            {[['TAM', formatMarketSize(market.tam), 'var(--success)'], ['SAM', formatMarketSize(market.sam), 'var(--info)'], ['SOM', formatMarketSize(market.som), '#8b5cf6']].map(([label, val, color]) => (
+            {[['TAM', formatMarketSize(market.tam), 'var(--success)'], ['SAM', formatMarketSize(market.sam), 'var(--cyan)'], ['SOM', formatMarketSize(market.som), 'var(--violet)']].map(([label, val, color]) => (
               <div key={label} className="text-center p-3 bg-card rounded-lg border border-default">
                 <div className="text-[10px] font-mono text-secondary mb-1">{label}</div>
                 <div className="text-lg font-bold font-display" style={{ color }}>{val || '—'}</div>
@@ -96,16 +96,16 @@ function EvidenceTab({ idea }) {
       {/* Reddit quotes */}
       {quotes.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-            <MessageSquare size={14} className="text-accent-500" /> Reddit Evidence
-            <span className="text-[10px] font-mono text-muted">{quotes.length} quotes</span>
+          <h3 className="font-display text-sm font-semibold text-primary flex items-center gap-2">
+            <MessageSquare size={14} className="text-cyan" /> Reddit Evidence
+            <span className="chip chip-verified">{quotes.length} quotes</span>
           </h3>
           {quotes.map((q, i) => (
             <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
-              className="card p-4 border-l-2 border-orange-400/40">
+              className="card p-4 border-l-2 border-cyan/40">
               <p className="text-sm text-primary leading-relaxed italic">"{q.text}"</p>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-[10px] font-mono text-accent-500">{q.subreddit}</span>
+                <span className="text-[10px] font-mono text-cyan">{q.subreddit}</span>
                 <span className="text-[10px] font-mono text-muted">↑ {q.upvotes?.toLocaleString()}</span>
                 <span className={clsx('text-[10px] font-mono', q.sentiment === 'negative' ? 'text-danger' : 'text-warning')}>
                   {q.sentiment}
@@ -119,16 +119,17 @@ function EvidenceTab({ idea }) {
       {/* News citations */}
       {citations.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-            <FileText size={14} className="text-info" /> News Citations
+          <h3 className="font-display text-sm font-semibold text-primary flex items-center gap-2">
+            <FileText size={14} className="text-brand" /> News Citations
+            <span className="chip chip-verified">{citations.length} sources</span>
           </h3>
           {citations.map((c, i) => (
             <div key={i} className="card p-3 flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+              <div className="node node-brand mt-1.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-primary">{c.title}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-mono text-info">{c.source}</span>
+                  <span className="text-[10px] font-mono text-brand">{c.source}</span>
                   {c.url && (
                     <a href={c.url} target="_blank" rel="noopener noreferrer"
                       className="text-[10px] text-muted hover:text-secondary flex items-center gap-1">
@@ -194,7 +195,7 @@ function ExecutionTab({ idea, pivotValue }) {
 
       {/* 72-hour plan */}
       <div className="space-y-3">
-        {[['0–24h', plan.hours24, 'var(--success)'], ['24–48h', plan.hours48, 'var(--info)'], ['48–72h', plan.hours72, '#8b5cf6']].map(([label, steps, color]) => (
+        {[['0–24h', plan.hours24, 'var(--success)'], ['24–48h', plan.hours48, 'var(--cyan)'], ['48–72h', plan.hours72, 'var(--violet)']].map(([label, steps, color]) => (
           steps?.length > 0 && (
             <div key={label} className="card p-4">
               <div className="flex items-center gap-2 mb-3">
@@ -255,7 +256,7 @@ function ExecutionTab({ idea, pivotValue }) {
             <Zap size={12} className="text-warning" /> Landing Page Copy
           </h3>
           <div className="bg-card rounded-lg p-4 border border-default space-y-2">
-            <h4 className="text-base font-bold text-white leading-snug">{smoke.landingPageCopy.headline}</h4>
+            <h4 className="text-base font-bold text-primary leading-snug">{smoke.landingPageCopy.headline}</h4>
             <p className="text-xs text-secondary">{smoke.landingPageCopy.subheadline}</p>
             <div className="pt-2">
               <button className="btn-primary text-xs py-2 px-4">{smoke.landingPageCopy.cta}</button>
@@ -284,11 +285,11 @@ function PersonasTab({ idea }) {
         <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
           className="card p-5">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-brand border border-brand/20 flex items-center justify-center text-xl flex-shrink-0">
-              {['🧑‍💼', '👩‍💻', '🧑‍🔬'][i % 3]}
+            <div className="w-12 h-12 rounded-full bg-brand border border-brand/20 flex items-center justify-center text-sm font-display font-bold text-brand flex-shrink-0">
+              {String(p.name || p.role || 'P').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-white text-sm">{p.name}</div>
+              <div className="font-semibold text-primary text-sm">{p.name}</div>
               <div className="text-xs text-brand font-mono">{p.role}</div>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
@@ -305,7 +306,7 @@ function PersonasTab({ idea }) {
                   <div className="text-[9px] font-mono uppercase text-muted mb-1">Where to Find</div>
                   <ul className="space-y-1">
                     {(p.communities || []).slice(0, 3).map((c, j) => (
-                      <li key={j} className="text-[10px] text-info font-mono">{c}</li>
+                      <li key={j} className="text-[10px] text-cyan font-mono">{c}</li>
                     ))}
                   </ul>
                 </div>
@@ -392,7 +393,7 @@ export default function IdeaDetail() {
                 </span>
               )}
             </div>
-            <h1 className="font-display font-bold text-xl text-white leading-snug">{idea.title}</h1>
+            <h1 className="font-display font-bold text-xl text-primary leading-snug">{idea.title}</h1>
             <p className="text-sm text-secondary mt-2 leading-relaxed">{idea.tagline}</p>
 
             <div className="flex items-center gap-3 mt-4">
@@ -412,8 +413,8 @@ export default function IdeaDetail() {
           {idea.scoring?.components && (
             <div className="hidden lg:block w-56 space-y-3">
               <ScoreBar label="Trend Strength" score={idea.scoring.components.trendStrength?.score || 0} weight="0.30" color="var(--success)" />
-              <ScoreBar label="Pain Intensity" score={idea.scoring.components.painIntensity?.score || 0} weight="0.25" color="var(--info)" />
-              <ScoreBar label="Market Size" score={idea.scoring.components.marketSize?.score || 0} weight="0.20" color="#8b5cf6" />
+              <ScoreBar label="Pain Intensity" score={idea.scoring.components.painIntensity?.score || 0} weight="0.25" color="var(--cyan)" />
+              <ScoreBar label="Market Size" score={idea.scoring.components.marketSize?.score || 0} weight="0.20" color="var(--violet)" />
               <ScoreBar label="Competition" score={idea.scoring.components.competitionDensity?.score || 0} weight="0.15" color="var(--warning)" />
               <ScoreBar label="Execution" score={idea.scoring.components.executionComplexity?.score || 0} weight="0.10" color="var(--warning)" />
             </div>

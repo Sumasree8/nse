@@ -1,0 +1,20 @@
+process.env.MONGODB_URI = 'mongodb://localhost:27017/nse';
+const ROOT = '/Users/sumasree/Downloads/nse/backend/src';
+const mongoose = require('mongoose');
+const { runIngestion } = require(ROOT + '/services/ingestionScheduler');
+const Signal = require(ROOT + '/models/Signal');
+const Idea = require(ROOT + '/models/Idea');
+(async () => {
+  await mongoose.connect('mongodb://localhost:27017/nse');
+  const before = await Signal.countDocuments();
+  const res = await runIngestion();
+  console.log('\nCycle result:', JSON.stringify(res));
+  console.log('Signals before:', before, '→ after:', await Signal.countDocuments());
+  const bySrc = await Signal.aggregate([{ $group: { _id: '$source.type', n: { $sum: 1 } } }, { $sort: { n: -1 } }]);
+  console.log('Signals by source type:', bySrc.map(s => `${s._id}:${s.n}`).join('  '));
+  const reddit = await Signal.find({ 'source.type': 'reddit' }).sort('-createdAt').limit(3).select('title source.name').lean();
+  console.log('\nSample Reddit signals:');
+  reddit.forEach(s => console.log(`  - ${s.source?.name}: ${String(s.title).slice(0,70)}`));
+  console.log('\nTotal opportunities:', await Idea.countDocuments(), '| mock:', await Idea.countDocuments({ aiModel: 'mock' }));
+  await mongoose.disconnect(); process.exit(0);
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -21,6 +21,13 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   if (featured === 'true') query.isFeatured = true;
   if (search) query.$text = { $search: search };
 
+  // Always break ties toward fresher opportunities so the feed updates as new
+  // real signals arrive (scores are integers, so ties are common). `sort=fresh`
+  // ranks purely by recency.
+  const sortSpec = sort === 'fresh'
+    ? '-createdAt'
+    : (sort.includes('createdAt') ? sort : `${sort} -createdAt`);
+
   // Free users get limited fields
   const projection = req.user?.tier === 'free'
     ? '-evidence.redditQuotes -execution.mvpPlan -risks.premortem -embedding'
@@ -29,7 +36,7 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const [ideas, total] = await Promise.all([
     Idea.find(query)
       .select(projection)
-      .sort(sort)
+      .sort(sortSpec)
       .skip((page - 1) * limit)
       .limit(Number(limit))
       .populate('signals', 'title source.type scoring.compositeScore')

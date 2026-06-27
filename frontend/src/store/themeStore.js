@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
-// Initialise from localStorage, fallback to system preference
+// Mission Control is dark-first. Honour an explicit stored choice, else dark.
 function getInitialTheme() {
   const stored = localStorage.getItem('nse_theme');
   if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'dark';
 }
 
 function applyTheme(theme) {
@@ -16,6 +16,7 @@ function applyTheme(theme) {
     root.classList.add('light');
     root.classList.remove('dark');
   }
+  root.style.backgroundColor = theme === 'light' ? '#EFEDE7' : '#0C0E13';
   localStorage.setItem('nse_theme', theme);
 }
 

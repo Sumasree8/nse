@@ -192,12 +192,16 @@ const MOCK_IDEAS = [
 ];
 
 async function generateStartupIdea({ signals, industry, customPrompt, fundingModel, userId }) {
-  // Check if OpenAI key is available
+  // No LLM key → synthesize a REAL, evidence-backed opportunity from real signals
+  // (deterministic, traceable to live news) instead of returning fabricated mock data.
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'demo-key') {
-    logger.warn('No OpenAI key - returning mock idea');
-    const mock = MOCK_IDEAS[Math.floor(Math.random() * MOCK_IDEAS.length)];
-    const idea = await Idea.create({ ...mock, generatedBy: userId, aiModel: 'mock' });
-    return idea;
+    const { synthesizeOne } = require('./opportunitySynthesis');
+    const idea = await synthesizeOne({ signals, industry, generatedBy: userId });
+    if (idea) return idea;
+    // Only reached when the signal database is empty (no real news ingested yet).
+    const err = new Error('No real signals available yet to build an opportunity. Run news ingestion first.');
+    err.statusCode = 422;
+    throw err;
   }
 
   const client = getOpenAI();
@@ -291,14 +295,12 @@ The JSON must follow this exact structure:
   return idea;
 }
 
+// Embeddings are produced by the shared embedding service: real OpenAI vectors
+// when a key is configured, otherwise a deterministic local embedding.
+// (No more random noise — random vectors broke dedup/clustering/novelty.)
+const { embed } = require('./embedding');
 async function generateEmbedding(text) {
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'demo-key') {
-    // Return random embedding for mock mode
-    return Array.from({ length: 1536 }, () => Math.random() * 2 - 1);
-  }
-  const client = getOpenAI();
-  const response = await client.embeddings.create({ model: 'text-embedding-3-small', input: text });
-  return response.data[0].embedding;
+  return embed(text);
 }
 
 async function seedMockData() {

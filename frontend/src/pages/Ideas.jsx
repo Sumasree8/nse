@@ -32,7 +32,7 @@ function IdeaCard({ idea }) {
       exit={{ opacity: 0, scale: 0.97 }}
       whileHover={{ y: -2 }}
       onClick={() => navigate(`/app/ideas/${idea._id}`)}
-      className="card p-5 cursor-pointer border border-default hover:border-strong transition-all duration-200"
+      className="card card-hover p-5 cursor-pointer"
     >
       {/* Top row */}
       <div className="flex items-start gap-4">
@@ -43,13 +43,16 @@ function IdeaCard({ idea }) {
             <span className="text-[10px] font-mono text-muted bg-subtle px-2 py-0.5 rounded-full">
               {idea.category?.industry}
             </span>
-            {idea.isFeatured && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-500/10 text-warning border border-yellow-500/20">
-                ★ Featured
+            {idea.evidence && (idea.evidence.redditQuotes?.length > 0 || idea.evidence.newsCitations?.length > 0) && (
+              <span className="chip chip-verified">
+                Verified · {(idea.evidence.redditQuotes?.length || 0) + (idea.evidence.newsCitations?.length || 0)} sources
               </span>
             )}
+            {idea.isFeatured && (
+              <span className="chip chip-rare">★ Featured</span>
+            )}
           </div>
-          <h3 className="text-sm font-semibold text-white leading-snug">{idea.title}</h3>
+          <h3 className="font-display text-sm font-semibold text-primary leading-snug">{idea.title}</h3>
           <p className="text-xs text-secondary mt-1 line-clamp-2">{idea.tagline}</p>
         </div>
       </div>
@@ -59,8 +62,8 @@ function IdeaCard({ idea }) {
         <div className="mt-4 space-y-1.5">
           {[
             { label: 'Trend', value: idea.scoring.components.trendStrength?.score, color: 'var(--success)' },
-            { label: 'Pain', value: idea.scoring.components.painIntensity?.score, color: 'var(--info)' },
-            { label: 'Market', value: idea.scoring.components.marketSize?.score, color: '#8b5cf6' },
+            { label: 'Pain', value: idea.scoring.components.painIntensity?.score, color: 'var(--cyan)' },
+            { label: 'Market', value: idea.scoring.components.marketSize?.score, color: 'var(--violet)' },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-2">
               <span className="text-[10px] font-mono text-muted w-10">{label}</span>
@@ -91,13 +94,13 @@ function IdeaCard({ idea }) {
           {delta !== undefined && (
             <div>
               <div className="text-[9px] text-muted font-mono uppercase">Delta</div>
-              <div className="text-xs font-mono text-info">{Math.round(delta * 100)}%</div>
+              <div className="text-xs font-mono text-cyan">{Math.round(delta * 100)}%</div>
             </div>
           )}
           <div>
             <div className="text-[9px] text-muted font-mono uppercase">Risk</div>
             <div className={clsx('text-xs font-mono', {
-              'text-brand': idea.risks?.overallRisk === 'low',
+              'text-success': idea.risks?.overallRisk === 'low',
               'text-warning': idea.risks?.overallRisk === 'medium',
               'text-danger': idea.risks?.overallRisk === 'high' || idea.risks?.overallRisk === 'critical',
             })}>
@@ -140,7 +143,7 @@ export default function Ideas() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-display font-bold text-2xl text-white">Startup Opportunities</h1>
+        <h1 className="font-display font-bold text-2xl text-primary">Startup Opportunities</h1>
         <p className="text-sm text-secondary mt-1">
           {data?.pagination?.total || '—'} validated opportunities ranked by Opportunity Score
         </p>

@@ -20,6 +20,7 @@ const watchlistRoutes = require('./routes/watchlist');
 const validationRoutes = require('./routes/validation');
 const userRoutes = require('./routes/users');
 const analyticsRoutes = require('./routes/analytics');
+const trajectoryRoutes = require('./routes/trajectory');
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/validation', validationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/trajectory', trajectoryRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use('*', (req, res) => {

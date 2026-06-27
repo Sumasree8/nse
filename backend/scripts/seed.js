@@ -31,43 +31,37 @@ async function seed() {
 
   // Dynamic requires after DB connected
   const User    = require('../src/models/User');
-  const { seedMockData } = require('../src/services/aiService');
-  const { ingestMockSignalsForSeed } = require('../src/services/ingestionScheduler');
+  const { runIngestion } = require('../src/services/ingestionScheduler');
 
   // ── Demo user ──────────────────────────────────────────────────────────────
-  const demoEmail = 'demo@nse.ai';
+  const demoEmail = 'demo@gmail.com';
+  const demoPassword = 'demo@1234';
   let demoUser = await User.findOne({ email: demoEmail });
 
   if (!demoUser) {
     demoUser = await User.create({
       email: demoEmail,
-      password: 'demo1234',
+      password: demoPassword,
       name: 'Demo Founder',
       tier: 'founder',
       emailVerified: true,
     });
     console.log('✅ Demo user created');
-    console.log('   Email   : demo@nse.ai');
-    console.log('   Password: demo1234');
+    console.log(`   Email   : ${demoEmail}`);
+    console.log(`   Password: ${demoPassword}`);
     console.log('   Tier    : founder (full access)\n');
   } else {
-    console.log('ℹ️  Demo user already exists (demo@nse.ai)\n');
+    console.log(`ℹ️  Demo user already exists (${demoEmail})\n`);
   }
 
-  // ── Signals ────────────────────────────────────────────────────────────────
+  // ── Signals (real news ingestion) ────────────────────────────────────────────
   try {
-    await ingestMockSignalsForSeed();
-    console.log('✅ Mock signals seeded\n');
+    console.log('📡 Running real news ingestion (RSS + GDELT)…');
+    const { runIngestion } = require('../src/services/ingestionScheduler');
+    const result = await runIngestion();
+    console.log(`✅ Ingestion complete — fetched ${result.fetched || 0}, inserted ${result.inserted || 0}, rejected ${result.rejected || 0}\n`);
   } catch (e) {
-    console.warn('⚠️  Signal seeding skipped:', e.message);
-  }
-
-  // ── Ideas ──────────────────────────────────────────────────────────────────
-  try {
-    await seedMockData();
-    console.log('✅ Mock startup ideas seeded\n');
-  } catch (e) {
-    console.warn('⚠️  Idea seeding skipped:', e.message);
+    console.warn('⚠️  Signal ingestion skipped:', e.message);
   }
 
   const Signal = require('../src/models/Signal');

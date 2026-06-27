@@ -66,21 +66,22 @@ export default function CommandBar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-w-lg mx-4 card overflow-hidden"
+            className="w-full max-w-lg mx-4 glass card overflow-hidden glow-cyan"
             style={{ boxShadow: 'var(--shadow-md)' }}
           >
             {/* Input */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-default">
-              <Search size={15} className="text-muted flex-shrink-0" />
+              <Search size={15} className="text-cyan flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
                 onKeyDown={handleKeyDown}
-                placeholder="Search commands, industries, ideas..."
+                placeholder="Ask Copilot or search the world's innovation pulse…"
                 className="flex-1 bg-transparent text-primary text-sm outline-none placeholder-muted font-sans"
               />
-              <button onClick={() => setOpen(false)} className="text-muted hover:text-secondary transition-colors">
+              <kbd className="bg-subtle px-1.5 py-0.5 rounded text-[10px] font-mono text-muted">⌘K</kbd>
+              <button onClick={() => setOpen(false)} className="text-muted hover:text-cyan transition-colors">
                 <X size={14} />
               </button>
             </div>
@@ -88,7 +89,10 @@ export default function CommandBar() {
             {/* Results */}
             <div className="max-h-72 overflow-y-auto py-2">
               {filtered.length === 0 ? (
-                <div className="px-4 py-6 text-center text-muted text-sm">No commands found</div>
+                <div className="px-4 py-8 text-center">
+                  <p className="text-secondary text-sm">No matches in the innovation pulse</p>
+                  <p className="text-muted text-xs mt-1 font-mono">Try an industry, signal, or idea</p>
+                </div>
               ) : (
                 Object.entries(grouped).map(([category, cmds]) => (
                   <div key={category}>
@@ -105,13 +109,13 @@ export default function CommandBar() {
                           onClick={() => handleSelect(cmd)}
                           onMouseEnter={() => setSelected(globalIdx)}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                          style={{ background: isActive ? 'var(--brand-bg)' : 'transparent' }}
+                          style={{ background: isActive ? 'var(--cyan-bg, rgba(6,182,212,0.1))' : 'transparent' }}
                         >
-                          <Icon size={14} style={{ color: isActive ? 'var(--brand)' : 'var(--text-muted)' }} />
-                          <span className="flex-1 text-sm" style={{ color: isActive ? 'var(--brand)' : 'var(--text-secondary)' }}>
+                          <Icon size={14} style={{ color: isActive ? 'var(--cyan)' : 'var(--text-muted)' }} />
+                          <span className="flex-1 text-sm" style={{ color: isActive ? 'var(--cyan)' : 'var(--text-secondary)' }}>
                             {cmd.label}
                           </span>
-                          {isActive && <ArrowRight size={12} style={{ color: 'var(--brand)' }} />}
+                          {isActive && <ArrowRight size={12} style={{ color: 'var(--cyan)' }} />}
                         </button>
                       );
                     })}
@@ -122,9 +126,10 @@ export default function CommandBar() {
 
             {/* Footer hints */}
             <div className="px-4 py-2 border-t border-default flex items-center gap-4 text-[10px] font-mono text-muted">
-              <span><kbd className="bg-subtle px-1 rounded">↑↓</kbd> navigate</span>
-              <span><kbd className="bg-subtle px-1 rounded">↵</kbd> select</span>
-              <span><kbd className="bg-subtle px-1 rounded">esc</kbd> close</span>
+              <span><kbd className="bg-subtle px-1 rounded text-secondary">↑↓</kbd> navigate</span>
+              <span><kbd className="bg-subtle px-1 rounded text-secondary">↵</kbd> select</span>
+              <span><kbd className="bg-subtle px-1 rounded text-secondary">esc</kbd> close</span>
+              <span className="ml-auto flex items-center gap-1.5 text-cyan"><span className="node node-pulse w-1.5 h-1.5" /> Copilot ready</span>
             </div>
           </motion.div>
         </motion.div>

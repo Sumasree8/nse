@@ -41,12 +41,20 @@ async function runValidationEngine(idea) {
     marketTiming: idea.whyNow?.triggers?.length > 0 ? 'Strong temporal signals' : 'Timing uncertain',
   };
 
-  // Confidence intervals
+  // Confidence intervals — derived from the depth of real evidence behind the
+  // idea, not hardcoded constants. More corroborating sources / competitors /
+  // market data => higher confidence.
+  const newsCount = idea.evidence?.newsCitations?.length || 0;
+  const redditCount = idea.evidence?.redditQuotes?.length || 0;
+  const competitorCount = idea.competitors?.length || 0;
+  const hasMarketData = idea.evidence?.marketData?.tam ? 1 : 0;
+  const clamp = (n) => Math.round(Math.min(95, Math.max(40, n)));
+
   const confidence = {
-    overall: Math.min(95, Math.max(55, weightedScore + 10)),
-    marketSize: 72,
-    competitorAnalysis: 80,
-    technicalFeasibility: idea.execution?.mvpPlan ? 88 : 60,
+    overall: clamp(weightedScore + Math.min(15, (newsCount + redditCount) * 2)),
+    marketSize: clamp(45 + hasMarketData * 25 + Math.min(20, newsCount * 7)),
+    competitorAnalysis: clamp(45 + Math.min(40, competitorCount * 12)),
+    technicalFeasibility: clamp((idea.execution?.mvpPlan ? 70 : 50) + (100 - executionComplexity) * 0.2),
   };
 
   // Recommendations

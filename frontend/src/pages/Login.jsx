@@ -1,27 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 function AuthLayout({ children, title, subtitle }) {
   return (
-    <div className="min-h-screen bg-surface-0 bg-grid flex items-center justify-center px-4">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 opacity-15 rounded-full"
-        style={{ background: 'radial-gradient(ellipse, #00ff88, transparent)', filter: 'blur(40px)' }} />
+    <div className="min-h-screen bg-page bg-grid flex items-center justify-center px-4">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 opacity-[0.10] rounded-full"
+        style={{ background: 'radial-gradient(ellipse, #6E86B8, transparent)', filter: 'blur(60px)' }} />
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative"
       >
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-neon-green flex items-center justify-center">
-            <Zap size={16} fill="#080b12" stroke="none" />
+        <div className="flex flex-col items-center gap-2 mb-8">
+          <div className="flex items-center gap-2">
+            <span className="node node-pulse w-3 h-3" />
+            <span className="font-display font-bold gradient-text text-2xl">NSE</span>
           </div>
-          <span className="font-display font-bold text-white text-lg">NSE</span>
+          <p className="text-xs font-mono text-muted tracking-wide">The Intelligence Layer for Founders</p>
         </div>
-        <div className="card p-8" style={{ boxShadow: '0 0 40px rgba(0,255,136,0.05)' }}>
-          <h1 className="font-display font-bold text-xl text-white mb-1">{title}</h1>
-          <p className="text-sm text-gray-500 mb-6">{subtitle}</p>
+        <div className="glass card p-8 glow-brand">
+          <h1 className="font-display font-bold text-xl text-primary mb-1">{title}</h1>
+          <p className="text-sm text-secondary mb-6">{subtitle}</p>
           {children}
         </div>
       </motion.div>
@@ -41,24 +42,24 @@ export function Login() {
     if (ok) navigate('/app');
   };
 
-  const fillDemo = () => setForm({ email: 'demo@nse.ai', password: 'demo1234' });
+  const fillDemo = () => setForm({ email: 'demo@gmail.com', password: 'demo@1234' });
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your NSE account">
+    <AuthLayout title="Welcome back" subtitle="Sign in to Mission Control">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-xs font-mono text-gray-500 mb-1.5 block">Email</label>
+          <label className="text-xs font-mono text-muted mb-1.5 block">Email</label>
           <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             placeholder="you@example.com" className="input-field" required />
         </div>
         <div>
-          <label className="text-xs font-mono text-gray-500 mb-1.5 block">Password</label>
+          <label className="text-xs font-mono text-muted mb-1.5 block">Password</label>
           <div className="relative">
             <input type={showPass ? 'text' : 'password'} value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               placeholder="••••••••" className="input-field pr-10" required />
             <button type="button" onClick={() => setShowPass(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-secondary">
               {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
@@ -66,13 +67,13 @@ export function Login() {
         <button type="submit" disabled={isLoading} className="btn-primary w-full justify-center py-2.5">
           {isLoading ? 'Signing in...' : 'Sign In'}
         </button>
-        <button type="button" onClick={fillDemo} className="btn-ghost w-full justify-center text-xs py-2">
+        <button type="button" onClick={fillDemo} className="btn-subtle w-full justify-center text-xs py-2">
           Use Demo Account
         </button>
       </form>
-      <p className="text-center text-xs text-gray-600 mt-5">
+      <p className="text-center text-xs text-secondary mt-5">
         Don't have an account?{' '}
-        <Link to="/auth/register" className="text-neon-green hover:underline">Create one free</Link>
+        <Link to="/auth/register" className="text-brand hover:underline">Create one free</Link>
       </p>
     </AuthLayout>
   );
@@ -91,26 +92,26 @@ export function Register() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="Start detecting startup opportunities today">
+    <AuthLayout title="Create your account" subtitle="Join Mission Control for Innovation">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-xs font-mono text-gray-500 mb-1.5 block">Full Name</label>
+          <label className="text-xs font-mono text-muted mb-1.5 block">Full Name</label>
           <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Your name" className="input-field" required />
         </div>
         <div>
-          <label className="text-xs font-mono text-gray-500 mb-1.5 block">Email</label>
+          <label className="text-xs font-mono text-muted mb-1.5 block">Email</label>
           <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             placeholder="you@example.com" className="input-field" required />
         </div>
         <div>
-          <label className="text-xs font-mono text-gray-500 mb-1.5 block">Password</label>
+          <label className="text-xs font-mono text-muted mb-1.5 block">Password</label>
           <div className="relative">
             <input type={showPass ? 'text' : 'password'} value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               placeholder="Min 8 characters" className="input-field pr-10" required minLength={8} />
             <button type="button" onClick={() => setShowPass(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-secondary">
               {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
@@ -119,12 +120,12 @@ export function Register() {
           {isLoading ? 'Creating account...' : 'Create Free Account'}
         </button>
       </form>
-      <p className="text-center text-xs text-gray-500 mt-4">
+      <p className="text-center text-xs text-muted mt-4">
         By signing up you agree to our Terms of Service
       </p>
-      <p className="text-center text-xs text-gray-600 mt-2">
+      <p className="text-center text-xs text-secondary mt-2">
         Already have an account?{' '}
-        <Link to="/auth/login" className="text-neon-green hover:underline">Sign in</Link>
+        <Link to="/auth/login" className="text-brand hover:underline">Sign in</Link>
       </p>
     </AuthLayout>
   );

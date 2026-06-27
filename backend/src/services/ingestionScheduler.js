@@ -1,89 +1,207 @@
+/**
+ * Ingestion pipeline — turns real, day-to-day news into verified signals.
+ *
+ *   sources (RSS + GDELT, no API key)
+ *      → embed (deterministic)
+ *      → novelty (vs recent corpus, for unique ideas)
+ *      → verify (domain credibility + cross-source corroboration)
+ *      → analyze (sentiment / industry / friction / scoring)
+ *      → noise gate
+ *      → persist (deduped by hash)
+ *
+ * No mock data is generated here anymore. If no MongoDB is available the cycle
+ * simply logs and exits — it never fabricates signals.
+ */
 const cron = require('node-cron');
-const axios = require('axios');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Signal = require('../models/Signal');
 const logger = require('../utils/logger');
-const { seedMockData } = require('./aiService');
+const { fetchRss } = require('./sources/rss');
+const { fetchGdelt } = require('./sources/gdelt');
+const { fetchReddit } = require('./sources/reddit');
+const { localEmbedding, cosineSimilarity } = require('./embedding');
+const { analyzeArticle, analyzeSentiment, painIntensity, problemRelevance } = require('./nlp');
+const { verify, passesGate } = require('./verification');
 
-// ── Mock signal data for demo ─────────────────────────────────────────────────
-const MOCK_SIGNALS = [
-  { title: 'SMBs Struggle With AI Tool Fragmentation', content: 'Small businesses report using 12+ disconnected AI tools with no unified workflow. Decision fatigue hitting productivity.', source: { type: 'reddit', name: 'r/smallbusiness', credibilityScore: 0.8 }, categorization: { industry: 'Productivity', tags: ['AI', 'SMB', 'SaaS'] }, analysis: { painIntensity: 0.87, sentiment: { score: -0.72, label: 'negative' }, frictionPoints: [{ description: 'Tool fragmentation and context switching', intensity: 0.9, category: 'workflow' }] }, scoring: { compositeScore: 0.85, relevanceScore: 0.88, urgencyScore: 0.82, noveltyScore: 0.75 } },
-  { title: 'Healthcare Staff Burnout Reaching Crisis Levels Post-Pandemic', content: 'Hospital systems report 40% nurse turnover in 2024. Staffing agencies charging 300% premium rates. Rural hospitals closing ER departments.', source: { type: 'news', name: 'Healthcare Weekly', credibilityScore: 0.92 }, categorization: { industry: 'Healthcare', tags: ['Staffing', 'Crisis', 'Rural Health'] }, analysis: { painIntensity: 0.95, sentiment: { score: -0.88, label: 'negative' }, frictionPoints: [{ description: 'Healthcare worker shortage creating care gaps', intensity: 0.95, category: 'workforce' }] }, scoring: { compositeScore: 0.91, relevanceScore: 0.94, urgencyScore: 0.96, noveltyScore: 0.68 } },
-  { title: 'E-commerce Returns Processing Costs Exploding', content: 'Online retailers spending $0.17 per dollar of revenue on returns processing. Return fraud hitting $100B industry-wide. No unified returns intelligence platform exists.', source: { type: 'reddit', name: 'r/ecommerce', credibilityScore: 0.78 }, categorization: { industry: 'E-Commerce', tags: ['Returns', 'Fraud', 'Operations'] }, analysis: { painIntensity: 0.82, sentiment: { score: -0.76, label: 'frustrated' }, frictionPoints: [{ description: 'Returns processing is a margin killer with no automation', intensity: 0.85, category: 'operations' }] }, scoring: { compositeScore: 0.80, relevanceScore: 0.83, urgencyScore: 0.78, noveltyScore: 0.82 } },
-  { title: 'Construction Industry Faces Massive Skills Shortage', content: '650,000 additional workers needed in 2025. Average age of construction worker is 43. Zero digital apprenticeship platforms. $1.3T in projects delayed due to labor shortages.', source: { type: 'news', name: 'Construction Dive', credibilityScore: 0.89 }, categorization: { industry: 'Construction', tags: ['Workforce', 'Training', 'Skills Gap'] }, analysis: { painIntensity: 0.91, sentiment: { score: -0.83, label: 'negative' }, frictionPoints: [{ description: 'No scalable way to train construction workers digitally', intensity: 0.92, category: 'education' }] }, scoring: { compositeScore: 0.87, relevanceScore: 0.90, urgencyScore: 0.89, noveltyScore: 0.85 } },
-  { title: 'Climate Tech Due Diligence Is Broken', content: 'VCs spending 6-8 months on climate tech DD vs 2-3 months for SaaS. No standardized carbon accounting verification. Greenwashing claims costing investors billions.', source: { type: 'reddit', name: 'r/climatetech', credibilityScore: 0.83 }, categorization: { industry: 'Climate Tech', tags: ['VC', 'ESG', 'Carbon', 'Due Diligence'] }, analysis: { painIntensity: 0.78, sentiment: { score: -0.65, label: 'frustrated' }, frictionPoints: [{ description: 'No standardized climate tech investment verification tooling', intensity: 0.82, category: 'finance' }] }, scoring: { compositeScore: 0.79, relevanceScore: 0.81, urgencyScore: 0.74, noveltyScore: 0.88 } },
-  { title: 'Legal AI Hallucination Problem Costing Law Firms', content: 'Multiple attorneys sanctioned for submitting AI-hallucinated case citations. No legal-specific AI verification layer exists. Bar associations creating emergency guidelines.', source: { type: 'news', name: 'Law.com', credibilityScore: 0.95 }, categorization: { industry: 'Legal Tech', tags: ['AI Safety', 'Legal', 'Compliance'] }, analysis: { painIntensity: 0.93, sentiment: { score: -0.89, label: 'critical' }, frictionPoints: [{ description: 'AI hallucination creating professional liability for lawyers', intensity: 0.95, category: 'compliance' }] }, scoring: { compositeScore: 0.89, relevanceScore: 0.92, urgencyScore: 0.94, noveltyScore: 0.79 } },
-  { title: 'Restaurant Industry Payroll Tax Complexity Explosion', content: 'Restaurant owners spending 15+ hours/week on tip pooling, FICA tip credits, and state-specific labor law compliance. $40B in annual penalties from payroll errors.', source: { type: 'reddit', name: 'r/restaurantowners', credibilityScore: 0.76 }, categorization: { industry: 'Restaurant Tech', tags: ['Payroll', 'Compliance', 'SMB'] }, analysis: { painIntensity: 0.85, sentiment: { score: -0.80, label: 'negative' }, frictionPoints: [{ description: 'Restaurant payroll is uniquely complex with no specialized tooling', intensity: 0.88, category: 'compliance' }] }, scoring: { compositeScore: 0.82, relevanceScore: 0.85, urgencyScore: 0.80, noveltyScore: 0.83 } },
-  { title: 'B2B Procurement Fraud Blind Spot Growing', content: 'Internal procurement fraud reaching $4.7T globally. 95% of organizations have no real-time vendor verification. Average fraud goes undetected for 16 months.', source: { type: 'news', name: 'CFO Magazine', credibilityScore: 0.91 }, categorization: { industry: 'FinTech', tags: ['Fraud Detection', 'Procurement', 'B2B', 'Enterprise'] }, analysis: { painIntensity: 0.89, sentiment: { score: -0.85, label: 'alarming' }, frictionPoints: [{ description: 'No real-time procurement fraud detection for mid-market companies', intensity: 0.91, category: 'security' }] }, scoring: { compositeScore: 0.86, relevanceScore: 0.89, urgencyScore: 0.88, noveltyScore: 0.80 } },
-];
+let running = false;
 
-async function ingestMockSignals() {
-  let inserted = 0;
-  for (const signal of MOCK_SIGNALS) {
-    const hash = crypto.createHash('sha256').update(signal.title).digest('hex');
-    const exists = await Signal.findOne({ hash });
-    if (!exists) {
-      await Signal.create({ ...signal, hash, processed: true, metadata: { publishedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000) } });
-      inserted++;
-    }
+function hashArticle(a) {
+  return crypto.createHash('sha256').update(a.url || a.title).digest('hex');
+}
+
+function articleText(a) {
+  return [a.title, a.summary, a.content].filter(Boolean).join('. ');
+}
+
+async function gatherArticles() {
+  const settled = await Promise.allSettled([fetchRss(), fetchGdelt(), fetchReddit()]);
+  const all = [];
+  for (const s of settled) if (s.status === 'fulfilled') all.push(...s.value);
+  // batch-level dedup by URL
+  const byKey = new Map();
+  for (const a of all) {
+    const key = a.url || a.title;
+    if (key && !byKey.has(key)) byKey.set(key, a);
   }
-  if (inserted > 0) logger.info(`Ingested ${inserted} mock signals`);
+  return [...byKey.values()];
+}
+
+/**
+ * Run one full ingestion cycle. Returns { fetched, inserted, rejected }.
+ */
+async function runIngestion() {
+  if (running) { logger.warn('Ingestion already running, skipping cycle'); return { skipped: true }; }
+  if (mongoose.connection.readyState !== 1) {
+    logger.warn('Ingestion skipped — MongoDB not connected');
+    return { fetched: 0, inserted: 0, rejected: 0 };
+  }
+  running = true;
+  const t0 = Date.now();
+  try {
+    const articles = await gatherArticles();
+    if (!articles.length) { logger.warn('Ingestion: no articles fetched'); return { fetched: 0, inserted: 0, rejected: 0 }; }
+
+    // 0. drop articles we already have (by hash)
+    const hashes = articles.map(a => { a._hash = hashArticle(a); return a._hash; });
+    const existing = new Set(
+      (await Signal.find({ hash: { $in: hashes } }).select('hash').lean()).map(s => s.hash)
+    );
+    const fresh = articles.filter(a => !existing.has(a._hash));
+    if (!fresh.length) { logger.info('Ingestion: all articles already known'); return { fetched: articles.length, inserted: 0, rejected: 0 }; }
+
+    // 1. deterministic embeddings (free, consistent space for corroboration + novelty)
+    for (const a of fresh) a.embedding = localEmbedding(articleText(a));
+
+    // 2. preliminary NLP signals (needed by the verification noise gate)
+    for (const a of fresh) {
+      const text = articleText(a);
+      const sentiment = analyzeSentiment(text);
+      const pain = painIntensity(text, sentiment);
+      a._relevance = problemRelevance(text, sentiment, pain);
+    }
+
+    // 3. novelty vs recent corpus (so corroborated dupes don't spawn duplicate ideas)
+    const corpus = await Signal.find({})
+      .select('+embedding')
+      .sort('-createdAt')
+      .limit(500)
+      .lean();
+    const corpusEmb = corpus.map(s => s.embedding).filter(e => Array.isArray(e) && e.length);
+
+    const docs = [];
+    let rejected = 0;
+    for (let i = 0; i < fresh.length; i++) {
+      const a = fresh[i];
+
+      // novelty = 1 - max similarity to corpus and to earlier accepted items this batch
+      let maxSim = 0;
+      for (const e of corpusEmb) maxSim = Math.max(maxSim, cosineSimilarity(a.embedding, e));
+      for (let j = 0; j < i; j++) if (fresh[j]._accepted) maxSim = Math.max(maxSim, cosineSimilarity(a.embedding, fresh[j].embedding));
+      const novelty = Number(Math.max(0, 1 - maxSim).toFixed(3));
+
+      // 4. verification (credibility + cross-source corroboration within batch)
+      const verification = verify(a, fresh, { relevance: a._relevance });
+
+      // 5. noise / trust gate — near-duplicates and untrusted noise are rejected
+      if (!passesGate(verification, a._relevance) || novelty < 0.12) { rejected++; continue; }
+      a._accepted = true;
+
+      // 6. full analysis + scoring with real verification inputs
+      const { analysis, categorization, scoring } = analyzeArticle(a, {
+        credibility: verification.credibility,
+        verificationScore: verification.score,
+        novelty,
+      });
+
+      docs.push({
+        title: a.title,
+        content: a.content || a.summary || a.title,
+        summary: a.summary,
+        source: {
+          type: a.sourceType || 'news',
+          name: a.sourceName,
+          url: a.url,
+          domain: a.domain,
+          credibilityScore: verification.credibility,
+        },
+        metadata: {
+          publishedAt: a.publishedAt || new Date(),
+          author: a.author,
+          language: 'en',
+          region: a.region,
+        },
+        analysis,
+        categorization,
+        scoring,
+        verification,
+        embedding: a.embedding,
+        hash: a._hash,
+        processed: true,
+      });
+    }
+
+    let inserted = 0;
+    if (docs.length) {
+      try {
+        const res = await Signal.insertMany(docs, { ordered: false });
+        inserted = res.length;
+      } catch (err) {
+        // duplicate-key races are expected under concurrent cycles
+        inserted = err?.result?.insertedCount ?? err?.insertedDocs?.length ?? 0;
+        if (err.code !== 11000) logger.warn(`insertMany partial: ${err.message}`);
+      }
+    }
+
+    logger.info(`Ingestion done in ${Date.now() - t0}ms — fetched ${articles.length}, inserted ${inserted}, rejected ${rejected} (noise/dupe/untrusted)`);
+
+    // Turn the freshly-verified real signals into real, evidence-backed
+    // opportunities (deterministic, no API key). Best-effort — never blocks ingestion.
+    let synthesized = 0;
+    if (inserted > 0) {
+      try {
+        const { synthesizeOpportunities } = require('./opportunitySynthesis');
+        const ideas = await synthesizeOpportunities({ max: 8, minScore: 0.4 });
+        synthesized = ideas.length;
+      } catch (e) {
+        logger.warn(`Opportunity synthesis skipped: ${e.message}`);
+      }
+    }
+
+    // Trajectory & outcome ledger (the proprietary, compounding moat). First
+    // attach the freshly-ingested signals back onto existing opportunities, then
+    // snapshot every opportunity's metrics into the time-series. Best-effort —
+    // a failure here must never disrupt ingestion.
+    let linkedEvents = 0;
+    try {
+      const { detectOutcomeEvents, recordSnapshots } = require('./trajectoryService');
+      if (inserted > 0) {
+        const r = await detectOutcomeEvents({ windowMinutes: 30 });
+        linkedEvents = r.events;
+      }
+      await recordSnapshots({});
+    } catch (e) {
+      logger.warn(`Trajectory update skipped: ${e.message}`);
+    }
+
+    return { fetched: articles.length, inserted, rejected, synthesized, linkedEvents };
+  } catch (err) {
+    logger.error(`Ingestion cycle failed: ${err.message}`);
+    return { error: err.message };
+  } finally {
+    running = false;
+  }
 }
 
 function startIngestionScheduler() {
-  // Seed initial data
-  setTimeout(async () => {
-    await ingestMockSignals();
-    await seedMockData();
-  }, 2000);
+  // Initial ingestion shortly after boot
+  setTimeout(() => { runIngestion(); }, 4000);
 
-  // Re-seed every 30 minutes in dev
-  cron.schedule('*/30 * * * *', async () => {
-    logger.info('Running scheduled ingestion...');
-    await ingestMockSignals();
+  // Real news refresh every 15 minutes
+  cron.schedule('*/15 * * * *', () => {
+    logger.info('Scheduled news ingestion starting…');
+    runIngestion();
   });
-
-  // Production: would hook into real NewsAPI, Reddit API, RSS feeds here
-  if (process.env.NEWS_API_KEY) {
-    cron.schedule('*/15 * * * *', async () => {
-      await ingestFromNewsAPI();
-    });
-  }
 }
 
-async function ingestFromNewsAPI() {
-  try {
-    const response = await axios.get('https://newsapi.org/v2/everything', {
-      params: { q: 'startup problem market gap innovation', apiKey: process.env.NEWS_API_KEY, pageSize: 20, language: 'en', sortBy: 'publishedAt' },
-    });
-    const articles = response.data.articles || [];
-    let inserted = 0;
-    for (const article of articles) {
-      const hash = crypto.createHash('sha256').update(article.url).digest('hex');
-      const exists = await Signal.findOne({ hash });
-      if (!exists && article.title && article.description) {
-        await Signal.create({
-          title: article.title,
-          content: article.content || article.description,
-          summary: article.description,
-          source: { type: 'news', name: article.source?.name, url: article.url, credibilityScore: 0.75 },
-          hash,
-          metadata: { publishedAt: new Date(article.publishedAt), author: article.author },
-          categorization: { industry: 'General', tags: [] },
-          scoring: { compositeScore: 0.5, relevanceScore: 0.5, urgencyScore: 0.5, noveltyScore: 0.5 },
-        });
-        inserted++;
-      }
-    }
-    if (inserted > 0) logger.info(`NewsAPI: Ingested ${inserted} articles`);
-  } catch (err) {
-    logger.error('NewsAPI ingestion failed:', err.message);
-  }
-}
-
-// Exported alias so the seed script can call it directly
-async function ingestMockSignalsForSeed() {
-  return ingestMockSignals();
-}
-
-module.exports = { startIngestionScheduler, ingestMockSignalsForSeed };
+module.exports = { startIngestionScheduler, runIngestion };

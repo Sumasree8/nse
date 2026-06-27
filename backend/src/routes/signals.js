@@ -2,16 +2,17 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const Signal = require('../models/Signal');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, protect, requireTier } = require('../middleware/auth');
 const { cache } = require('../config/redis');
 
 // GET /api/signals - List signals
 router.get('/', optionalAuth, asyncHandler(async (req, res) => {
-  const { page = 1, limit = 30, industry, sourceType, minScore = 0, startDate, endDate } = req.query;
+  const { page = 1, limit = 30, industry, sourceType, minScore = 0, startDate, endDate, verification } = req.query;
 
   const query = {};
   if (industry) query['categorization.industry'] = industry;
   if (sourceType) query['source.type'] = sourceType;
+  if (verification) query['verification.status'] = verification;
   if (minScore) query['scoring.compositeScore'] = { $gte: Number(minScore) };
   if (startDate || endDate) {
     query['metadata.publishedAt'] = {};
@@ -74,6 +75,13 @@ router.get('/meta/trending', asyncHandler(async (req, res) => {
       .lean();
   });
   res.json({ trending });
+}));
+
+// POST /api/signals/ingest - Trigger a real news ingestion cycle on demand (admin/founder)
+router.post('/ingest', protect, requireTier('founder'), asyncHandler(async (req, res) => {
+  const { runIngestion } = require('../services/ingestionScheduler');
+  const result = await runIngestion();
+  res.json({ message: 'Ingestion cycle complete', ...result });
 }));
 
 module.exports = router;

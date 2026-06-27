@@ -135,6 +135,67 @@ const ideaSchema = new mongoose.Schema({
     },
   },
 
+  // ── Market & Demand Intelligence ────────────────────────────────────────────
+  // Real, fused demand evidence (no fabricated TAM). Computed from multi-source
+  // signals: news momentum, source breadth, community demand, research activity.
+  marketSignals: {
+    demandIndex: { type: Number, min: 0, max: 100 },     // 0-100 composite
+    newsMomentum: { count7d: Number, countPrior: Number, trend: String, velocityPct: Number },
+    sourceBreadth: { sources: Number, domains: Number, verified: Number },
+    community: { redditMentions: Number, avgPain: Number },
+    research: { source: String, count: Number, samples: [String] },
+    hiring: { source: String, count: Number, samples: [String] },
+    funding: { source: String, count: Number, samples: [String] },
+    updatedAt: Date,
+  },
+
+  // ── Trajectory & Outcome Ledger (proprietary, compounding moat) ─────────────
+  // Derived rollup of the OpportunitySnapshot time-series. Lets the feed rank by
+  // *momentum* (how an opportunity is moving), not just a static score — a view
+  // that only exists because we've been recording history.
+  trajectory: {
+    firstTrackedAt: Date,
+    lastSnapshotAt: Date,
+    snapshots: { type: Number, default: 0 },
+    daysTracked: { type: Number, default: 0 },
+    velocity: { type: Number, default: 0 },        // opportunityScore points / week
+    peakScore: { type: Number, default: 0 },
+    momentum: {
+      type: String,
+      enum: ['accelerating', 'rising', 'steady', 'cooling', 'dormant'],
+      default: 'steady',
+      index: true,
+    },
+  },
+
+  // Living evidence + ground-truth labels. `events` are auto-detected from newly
+  // ingested signals (funding, competitor launch, regulatory shift) OR reported
+  // by real users. User-reported outcomes are the proprietary gold: realized
+  // results that can eventually calibrate scores instead of guessed tables.
+  outcome: {
+    status: {
+      type: String,
+      enum: ['open', 'validated', 'building', 'launched', 'funded', 'acquired', 'dead'],
+      default: 'open',
+      index: true,
+    },
+    events: [{
+      type: {
+        type: String,
+        enum: ['new_evidence', 'competitor_emerged', 'funding_detected', 'regulatory_shift', 'demand_spike', 'demand_decline', 'user_report'],
+      },
+      description: String,
+      origin: { type: String, enum: ['system', 'user'], default: 'system' },
+      signal: { type: mongoose.Schema.Types.ObjectId, ref: 'Signal' },
+      url: String,
+      confidence: Number,
+      recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      at: { type: Date, default: Date.now },
+    }],
+    reportCount: { type: Number, default: 0 },     // user-contributed outcome reports
+    lastEventAt: Date,
+  },
+
   signals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Signal' }],
   clusterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Cluster' },
   embedding: { type: [Number], select: false },
@@ -151,6 +212,8 @@ const ideaSchema = new mongoose.Schema({
 ideaSchema.index({ 'scoring.opportunityScore': -1 });
 ideaSchema.index({ 'category.industry': 1, 'scoring.opportunityScore': -1 });
 ideaSchema.index({ 'scoring.trendPhase': 1, createdAt: -1 });
+ideaSchema.index({ 'trajectory.momentum': 1, 'trajectory.velocity': -1 });
+ideaSchema.index({ 'outcome.status': 1, 'scoring.opportunityScore': -1 });
 ideaSchema.index({ '$**': 'text' });
 
 module.exports = mongoose.model('Idea', ideaSchema);

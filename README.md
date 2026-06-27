@@ -8,7 +8,7 @@
 
 NSE solves the #1 problem facing founders: **finding validated startup ideas faster than competitors**.
 
-Instead of guessing or copying, NSE ingests 500+ real-world signals (news, Reddit, regulatory changes, product reviews) and uses a multi-agent AI pipeline to surface emerging problems with:
+Instead of guessing or copying, NSE ingests **real, day-to-day news** (public RSS feeds + GDELT — no API key required), runs it through a **verification layer** (per-domain credibility + cross-source corroboration + a noise gate), and uses a multi-agent AI pipeline to surface emerging problems with:
 
 - **Evidence trail** (Reddit quotes, news citations, regulatory refs)
 - **Opportunity scoring** (5-factor weighted system)
@@ -107,7 +107,7 @@ mongod --dbpath /data/db
 ```bash
 cd backend
 npm run seed
-# Creates demo@nse.ai / demo1234 + sample signals & ideas
+# Creates demo@gmail.com / demo@1234 + sample signals & ideas
 ```
 
 ### 5. Start the App
@@ -128,7 +128,7 @@ npm run dev
 ### 6. Login
 
 - Open http://localhost:5173
-- Use **demo@nse.ai** / **demo1234**  (seeded Founder account)
+- Use **demo@gmail.com** / **demo@1234**  (seeded Founder account)
 - Or register a new free account
 
 ### 7. Run with Docker (full stack)
@@ -141,12 +141,32 @@ docker-compose up -d
 # MongoDB + Redis included
 ```
 
-### Demo Mode (No MongoDB needed)
+### Real News Ingestion Pipeline
 
-The app works **without MongoDB** — it falls back to in-memory mock data:
-- Signals and ideas served from built-in mock datasets
-- Full UI, scoring, evidence trail, MVP plans all work
-- Great for quick demos and development without any setup
+Signals are **not mocked** — they come from live news. On startup (and every 15 min) the
+ingestion scheduler runs this pipeline:
+
+```
+RSS feeds + GDELT (no API key)
+   → deterministic embedding
+   → novelty check (vs recent corpus → unique ideas, no duplicates)
+   → VERIFICATION  (domain credibility + cross-source corroboration)
+   → NLP analysis  (sentiment · industry · friction points · scoring)
+   → noise gate    (drops promo / off-topic / untrusted single sources)
+   → MongoDB (deduped by content hash)
+```
+
+**Verification ("is this news real?")** — a story is marked:
+- `verified` — corroborated by 2+ independent reputable domains
+- `corroborated` — 1 independent corroboration, or a single highly-credible source
+- `single-source` / `unverified` — proceed with caution
+- `noise` — filtered out, never stored
+
+Trigger a cycle manually (founder tier): `POST /api/signals/ingest`.
+Filter the feed by trust: `GET /api/signals?verification=verified`.
+
+> MongoDB is required for persistence. The ingestion job skips (it never fabricates
+> signals) if the database is unreachable. Set `MONGODB_URI` in `backend/.env`.
 
 ---
 
@@ -227,16 +247,16 @@ Returns full validation report with kill-switches, opportunity windows, PMF indi
 
 | Tier | Price | Key Features |
 |------|-------|-------------|
-| Free | $0 | 5 ideas/mo, 20 signals/day, basic scoring |
-| Pro | $29/mo | 100 ideas, full evidence trail, MVP plans, watchlist |
-| Founder | $99/mo | Unlimited, VC reports, white-label, API key |
-| Enterprise | $10k+/yr | Custom API, dedicated infra, SLA, white-label |
+| Free | ₹0 | 5 ideas/mo, 20 signals/day, basic scoring |
+| Pro | ₹2,499/mo | 100 ideas, full evidence trail, MVP plans, watchlist |
+| Founder | ₹7,999/mo | Unlimited, VC reports, white-label, API key |
+| Enterprise | ₹8,00,000+/yr | Custom API, dedicated infra, SLA, white-label |
 
 **Additional Revenue Streams:**
-- VC Intelligence Reports (PDF, $299/report)
-- Trend Forecasting Reports (quarterly, $499)
+- VC Intelligence Reports (PDF, ₹24,999/report)
+- Trend Forecasting Reports (quarterly, ₹39,999)
 - API Licensing (enterprise, volume pricing)
-- White-label Dashboards ($5k-50k setup fee)
+- White-label Dashboards (₹4,00,000–40,00,000 setup fee)
 
 ---
 

@@ -44,9 +44,9 @@ export default function Watchlist() {
   if (!isAuthenticated()) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-96">
-        <BookMarked size={40} className="text-gray-700 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-300 mb-2">Sign in to use Watchlists</h2>
-        <p className="text-sm text-gray-600 mb-6">Track opportunities and get alerts when new signals emerge</p>
+        <BookMarked size={40} className="text-brand mb-4" />
+        <h2 className="font-display text-lg font-semibold text-primary mb-2">Sign in to use Watchlists</h2>
+        <p className="text-sm text-secondary mb-6">Track opportunities and get alerts when new signals emerge</p>
         <button onClick={() => navigate('/auth/login')} className="btn-primary">Sign In</button>
       </div>
     );
@@ -56,8 +56,8 @@ export default function Watchlist() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display font-bold text-2xl text-white">Watchlist</h1>
-          <p className="text-sm text-gray-500 mt-1">Track ideas and get alerted on new signals</p>
+          <h1 className="font-display font-bold text-2xl text-primary">Watchlist</h1>
+          <p className="text-sm text-secondary mt-1">Track the problems you believe in. Get alerted on new signals.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary text-xs">
           <Plus size={13} /> New Watchlist
@@ -71,7 +71,7 @@ export default function Watchlist() {
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="card p-5"
           >
-            <h3 className="text-sm font-semibold text-gray-200 mb-3">Create Watchlist</h3>
+            <h3 className="font-display text-sm font-semibold text-primary mb-3">Create Watchlist</h3>
             <div className="flex gap-3">
               <input
                 value={newName}
@@ -101,10 +101,10 @@ export default function Watchlist() {
           ))}
         </div>
       ) : lists.length === 0 ? (
-        <div className="card p-16 text-center border-dashed border-surface-4">
-          <BookMarked size={32} className="text-gray-700 mx-auto mb-3" />
-          <p className="text-sm text-gray-600">No watchlists yet</p>
-          <p className="text-xs text-gray-700 mt-1">Create a watchlist to track opportunities and get alerts</p>
+        <div className="card p-16 text-center border-dashed border-default">
+          <BookMarked size={32} className="text-brand mx-auto mb-3" />
+          <p className="font-display text-sm font-semibold text-primary">Track the problems you believe in</p>
+          <p className="text-xs text-secondary mt-1">Create a watchlist to follow opportunities and get alerted the moment new signals emerge</p>
           <button onClick={() => setShowCreate(true)} className="btn-primary text-xs mt-4">
             <Plus size={12} /> Create First Watchlist
           </button>
@@ -117,22 +117,22 @@ export default function Watchlist() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="card p-5"
+              className="card card-hover p-5"
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{list.name}</h3>
-                  {list.description && <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>}
+                  <h3 className="font-display text-sm font-semibold text-primary">{list.name}</h3>
+                  {list.description && <p className="text-xs text-secondary mt-0.5">{list.description}</p>}
                 </div>
                 <div className="flex items-center gap-2">
                   {list.alerts?.enabled && (
-                    <div className="flex items-center gap-1 text-[10px] font-mono text-neon-green">
-                      <Bell size={10} className="animate-pulse" /> alerts on
+                    <div className="chip chip-live flex items-center gap-1">
+                      <Bell size={10} /> alerts on
                     </div>
                   )}
                   <button
                     onClick={() => deleteMutation.mutate(list._id)}
-                    className="p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                    className="p-1.5 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -150,23 +150,23 @@ export default function Watchlist() {
                     >
                       <ScoreRing score={idea.scoring?.opportunityScore || 0} size={36} strokeWidth={2.5} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-200 truncate">{idea.title}</p>
+                        <p className="text-xs font-medium text-secondary truncate">{idea.title}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {idea.scoring?.trendPhase && (
                             <span className={`phase-badge ${idea.scoring.trendPhase.toLowerCase()}`} style={{ fontSize: 9 }}>
                               {idea.scoring.trendPhase}
                             </span>
                           )}
-                          <span className="text-[9px] text-gray-600">{idea.category?.industry}</span>
+                          <span className="text-[9px] font-mono text-muted">{idea.category?.industry}</span>
                         </div>
                       </div>
-                      <ArrowUpRight size={12} className="text-gray-600" />
+                      <ArrowUpRight size={12} className="text-cyan" />
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="py-4 text-center text-xs text-gray-600 border border-dashed border-surface-4 rounded-lg">
-                  No ideas saved. Browse <button onClick={() => navigate('/app/ideas')} className="text-neon-green hover:underline">Opportunities</button> and save ideas here.
+                <div className="py-4 text-center text-xs text-secondary border border-dashed border-default rounded-lg">
+                  No ideas saved. Browse <button onClick={() => navigate('/app/ideas')} className="text-cyan hover:underline">Opportunities</button> and save ideas here.
                 </div>
               )}
             </motion.div>

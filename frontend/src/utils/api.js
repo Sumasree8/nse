@@ -128,8 +128,10 @@ function detectCountry() {
   }
 }
 
-const USER_COUNTRY = detectCountry();
-const CURR = CURRENCY_MAP[USER_COUNTRY] || CURRENCY_MAP['US'];
+// NSE prices everything in Indian Rupees. We keep the detection helper above for
+// future multi-currency support, but force INR for now.
+const USER_COUNTRY = detectCountry(); // eslint-disable-line no-unused-vars
+const CURR = CURRENCY_MAP['IN'];
 
 /**
  * Convert a USD market-size string like "$19.3B" or "$420M"

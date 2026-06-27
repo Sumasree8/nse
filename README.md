@@ -1,404 +1,300 @@
-# NSE — News-to-Startup Engine
+<div align="center">
 
-> **The Bloomberg Terminal for startup intelligence.** AI-powered global system that detects emerging real-world problems and converts them into validated, evidence-backed, execution-ready startup opportunities.
+# 🛰️ NSE — News-to-Startup Engine
+
+### The Bloomberg Terminal for startup intelligence.
+
+**An AI system that reads the world's news in real time, verifies what's real, and turns emerging problems into validated, evidence-backed, execution-ready startup opportunities.**
+
+[![Node](https://img.shields.io/badge/Node-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://docker.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[Quick Start](#-quick-start) · [How It Works](#-how-it-works) · [Architecture](#-architecture) · [API](#-api-reference) · [Why It's Different](#-what-makes-nse-different)
+
+</div>
 
 ---
 
-## Product Vision
+## 💡 The Problem
 
-NSE solves the #1 problem facing founders: **finding validated startup ideas faster than competitors**.
+Every founder faces the same bottleneck: **finding a validated idea before the market is saturated.** Today that means manually scanning news, Reddit threads, and regulatory filings — slow, biased, and impossible to do at global scale.
 
-Instead of guessing or copying, NSE ingests **real, day-to-day news** (public RSS feeds + GDELT — no API key required), runs it through a **verification layer** (per-domain credibility + cross-source corroboration + a noise gate), and uses a multi-agent AI pipeline to surface emerging problems with:
-
-- **Evidence trail** (Reddit quotes, news citations, regulatory refs)
-- **Opportunity scoring** (5-factor weighted system)
-- **72-hour MVP plan** (step-by-step build guide)
-- **Competitor gap map** (where to attack)
-- **Pre-mortem analysis** (why it might fail + how to mitigate)
+**NSE automates the entire discovery-to-validation loop.** It ingests live news every 15 minutes, filters out noise and misinformation, clusters real recurring problems, and synthesizes each one into a fully-scored opportunity with an evidence trail and a 72-hour MVP plan.
 
 ---
 
-## Architecture
+## ✨ What Makes NSE Different
+
+> Most "AI idea generators" hallucinate plausible-sounding ideas from a prompt. **NSE never invents a thesis it can't back with real, corroborated news.**
+
+| Differentiator | What it means |
+|---|---|
+| 🌍 **Zero-API-key real data** | Live signals from public **RSS feeds + GDELT + Reddit** — no paid data vendors required to run. |
+| 🛡️ **Verification layer** | Every story is scored for credibility (per-domain trust + cross-source corroboration) and tagged `verified` / `corroborated` / `single-source` / `noise`. Noise is dropped, never stored. |
+| 🧬 **Grounded synthesis** | Opportunities are clustered from real signals by **semantic embedding similarity** and require **2+ corroborating sources** — no single-story theses, no template filler. |
+| 📈 **The trajectory moat** | NSE records opportunity history over time, so it can answer *"what's heating up right now?"* — a momentum view that only exists because it's been watching since day one. |
+| 🔬 **Validation engine** | 5-factor opportunity scoring, kill-switches, opportunity windows, and a pre-mortem for every idea. |
+
+---
+
+## 🧠 How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         NSE SYSTEM ARCHITECTURE                     │
-├─────────────────┬───────────────────────┬───────────────────────────┤
-│   DATA LAYER    │    AI ENGINE LAYER     │      API/UI LAYER         │
-├─────────────────┼───────────────────────┼───────────────────────────┤
-│                 │                       │                           │
-│  NewsAPI ──────►│ Signal Collector      │  REST API (Express)       │
-│  Reddit API ───►│ Trend Delta Agent     │  ├── GET /signals         │
-│  RSS Feeds ────►│ Clustering Agent      │  ├── GET /ideas           │
-│  Regulatory ───►│ Friction Extractor    │  ├── POST /ideas/generate │
-│  G2/Capterra ──►│ Validation Agent      │  ├── GET /clusters        │
-│                 │ Risk/Kill-Switch       │  ├── POST /watchlist      │
-│  MongoDB ◄─────►│ Blueprint Agent       │  └── GET /analytics       │
-│  Redis ◄───────►│                       │                           │
-│  Pinecone ◄────►│  OpenAI GPT-4         │  React Frontend           │
-│                 │  text-embedding-3     │  ├── Dashboard (heatmap)  │
-│                 │                       │  ├── Ideas Browser        │
-│                 │                       │  ├── Context Drawer       │
-│                 │                       │  ├── Builder Mode         │
-│                 │                       │  ├── Pivot Slider         │
-│                 │                       │  ├── Command Bar (⌘K)     │
-│                 │                       │  └── Watchlist            │
-└─────────────────┴───────────────────────┴───────────────────────────┘
+        ┌──────────────── INGESTION (every 15 min, no API key) ───────────────┐
+        │                                                                     │
+  RSS ──┤                                                                     │
+GDELT ──┼─► deterministic     ─► novelty      ─► VERIFICATION  ─► NLP analysis│
+Reddit ─┤   embedding            check            (credibility +    (sentiment·│
+        │   (semantic            (vs recent        cross-source      industry· │
+        │    fingerprint)         corpus)          corroboration)    friction) │
+        │                                                              │       │
+        └──────────────────────────────────────────────────────────┐  ▼       │
+                                                          NOISE GATE │  MongoDB │
+                                       (drops promo / off-topic /    │ (deduped │
+                                        untrusted single sources)    │ by hash) │
+                                                                     └──────────┘
+                                                                          │
+        ┌──────────────── SYNTHESIS (signals → opportunities) ───────────┘
+        │
+        ├─► relevance gate  (must express a real business problem)
+        ├─► embedding clustering (group signals about the same thing)
+        ├─► corroboration  (≥ 2 related signals required)
+        └─► grounded opportunity:  score · evidence trail · 72h MVP plan
+                                    competitor gaps · pre-mortem · trajectory
+```
+
+**Verification verdicts** — *"is this news actually real?"*
+- 🟢 `verified` — corroborated by 2+ independent reputable domains
+- 🟡 `corroborated` — 1 independent corroboration, or a single highly-credible source
+- 🟠 `single-source` / `unverified` — proceed with caution
+- 🔴 `noise` — filtered out, never stored
+
+> MongoDB is required for persistence. The ingestion job **skips rather than fabricates** if the database is unreachable, so the feed is always real.
+> Trigger a cycle manually (Founder tier): `POST /api/signals/ingest` · Filter by trust: `GET /api/signals?verification=verified`
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┬────────────────────────────┬────────────────────────────┐
+│   DATA LAYER    │      AI ENGINE LAYER        │       API / UI LAYER       │
+├─────────────────┼────────────────────────────┼────────────────────────────┤
+│ RSS Feeds ─────►│ Source adapters             │ REST API (Express + JWT)   │
+│ GDELT ─────────►│ Embedding (semantic)        │  ├─ /auth   /ideas         │
+│ Reddit ────────►│ Verification + NLP          │  ├─ /signals /clusters     │
+│                 │ Opportunity Synthesis       │  ├─ /trends  /validation   │
+│ MongoDB 7 ◄────►│ Validation (5-factor)       │  ├─ /watchlist /trajectory │
+│ Redis (cache) ◄►│ Trajectory / Outcome ledger │  └─ /analytics  /users     │
+│                 │ Market Intel                │                            │
+│                 │ OpenAI GPT-4 (optional)*    │ React 18 SPA (Vite)        │
+│                 │                             │  ├─ Dashboard (heatmap)    │
+│                 │ * Fully functional with     │  ├─ Ideas / IdeaDetail     │
+│                 │   rich mock + real-signal   │  ├─ Builder · Signals      │
+│                 │   synthesis when no key set │  ├─ Watchlist · Pricing    │
+│                 │                             │  └─ Command Bar (⌘K)       │
+└─────────────────┴────────────────────────────┴────────────────────────────┘
 ```
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | React 18, Vite, Tailwind CSS, Framer Motion, TanStack Query |
-| Backend | Node.js, Express, JWT Auth |
-| Database | MongoDB 7 (primary), Redis (cache/queues) |
-| AI | OpenAI GPT-4 Turbo, text-embedding-3-small |
-| Deployment | Docker, docker-compose, Nginx |
-| Monitoring | Winston logging, /health endpoint |
+|------|-----------|
+| **Frontend** | React 18 · Vite · TanStack Query · Zustand · Framer Motion · Recharts · Tailwind-style CSS · Lucide |
+| **Backend** | Node.js 20 · Express · JWT auth · Helmet · rate-limiting · node-cron |
+| **Database** | MongoDB 7 (Mongoose) · Redis (cache / queues) |
+| **AI / NLP** | Semantic embeddings + cosine clustering · OpenAI GPT-4 Turbo *(optional)* |
+| **Data Sources** | RSS (`rss-parser`) · GDELT · Reddit · Cheerio scraping |
+| **DevOps** | Docker · docker-compose · Nginx · Winston logging · `/health` |
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+
-- Docker & Docker Compose (optional but recommended)
-- MongoDB (local or Atlas)
-- OpenAI API key (optional — works with mock data)
+- **Node.js 20+**
+- **MongoDB** (local, Docker, or Atlas) — required for real persistence
+- Docker (optional, for one-command full stack)
+- OpenAI API key (**optional** — the app runs fully on real signals + mock synthesis without one)
 
-### 1. Clone & Install
-
-```bash
-git clone https://github.com/your-org/nse.git
-cd nse
-
-# Install all dependencies (backend + frontend)
-cd backend && npm install
-cd ../frontend && npm install
-```
-
-### 2. Configure Environment
+### Option A — One command (Docker) ⚡
 
 ```bash
-# The backend/.env file is pre-filled with safe dev defaults.
-# No changes needed to run locally.
-# Optionally add your OpenAI key for real AI generation:
-# OPENAI_API_KEY=sk-...   (leave blank to use rich mock data)
-```
-
-### 3. Start MongoDB (pick one)
-
-```bash
-# Option A — Docker (easiest)
-docker run -d -p 27017:27017 --name mongo mongo:7
-
-# Option B — MongoDB installed locally
-mongod --dbpath /data/db
-
-# Option C — MongoDB Atlas free tier
-# Set MONGODB_URI in backend/.env to your Atlas connection string
-```
-
-### 4. Seed Demo Data (optional but recommended)
-
-```bash
-cd backend
-npm run seed
-# Creates demo@gmail.com / demo@1234 + sample signals & ideas
-```
-
-### 5. Start the App
-
-```bash
-# Terminal 1 — Backend
-cd backend
-npm run dev
-# → http://localhost:4000
-# → http://localhost:4000/health  (health check)
-
-# Terminal 2 — Frontend
-cd frontend
-npm run dev
-# → http://localhost:5173
-```
-
-### 6. Login
-
-- Open http://localhost:5173
-- Use **demo@gmail.com** / **demo@1234**  (seeded Founder account)
-- Or register a new free account
-
-### 7. Run with Docker (full stack)
-
-```bash
+git clone https://github.com/Sumasree8/nse.git
 cd nse
 docker-compose up -d
-# Frontend: http://localhost
-# Backend:  http://localhost:4000
+# Frontend → http://localhost      Backend → http://localhost:4000
 # MongoDB + Redis included
 ```
 
-### Real News Ingestion Pipeline
+### Option B — Local dev
 
-Signals are **not mocked** — they come from live news. On startup (and every 15 min) the
-ingestion scheduler runs this pipeline:
+```bash
+git clone https://github.com/Sumasree8/nse.git
+cd nse
 
+# 1. Install everything (npm workspaces)
+npm run install:all
+
+# 2. Start MongoDB (pick one)
+docker run -d -p 27017:27017 --name mongo mongo:7   # easiest
+# or: mongod --dbpath /data/db
+# or: set MONGODB_URI in backend/.env to your Atlas string
+
+# 3. (Optional) seed demo data — creates demo@gmail.com / demo@1234
+npm run seed
+
+# 4. Run backend + frontend together
+npm run dev
+# Backend  → http://localhost:4000   (health: /health)
+# Frontend → http://localhost:5173
 ```
-RSS feeds + GDELT (no API key)
-   → deterministic embedding
-   → novelty check (vs recent corpus → unique ideas, no duplicates)
-   → VERIFICATION  (domain credibility + cross-source corroboration)
-   → NLP analysis  (sentiment · industry · friction points · scoring)
-   → noise gate    (drops promo / off-topic / untrusted single sources)
-   → MongoDB (deduped by content hash)
-```
 
-**Verification ("is this news real?")** — a story is marked:
-- `verified` — corroborated by 2+ independent reputable domains
-- `corroborated` — 1 independent corroboration, or a single highly-credible source
-- `single-source` / `unverified` — proceed with caution
-- `noise` — filtered out, never stored
+### Login
+Open **http://localhost:5173** and either:
+- Use the seeded **Founder** account → `demo@gmail.com` / `demo@1234`
+- Click **Demo Account**, or register any valid email (8+ char password)
 
-Trigger a cycle manually (founder tier): `POST /api/signals/ingest`.
-Filter the feed by trust: `GET /api/signals?verification=verified`.
-
-> MongoDB is required for persistence. The ingestion job skips (it never fabricates
-> signals) if the database is unreachable. Set `MONGODB_URI` in `backend/.env`.
+> `backend/.env` ships with safe dev defaults — no config needed to run locally. Add `OPENAI_API_KEY` only if you want live GPT-4 generation.
 
 ---
 
-## API Documentation
+## 📡 API Reference
 
-### Authentication
+All protected routes require `Authorization: Bearer <token>`.
 
-All protected routes require: `Authorization: Bearer <token>`
-
-#### POST /api/auth/register
-```json
-{ "name": "Jane Doe", "email": "jane@example.com", "password": "securepass" }
-```
-Returns: `{ token, user }`
-
-#### POST /api/auth/login
-```json
-{ "email": "jane@example.com", "password": "securepass" }
-```
-Returns: `{ token, user }`
+### Auth
+| Method | Endpoint | Body |
+|---|---|---|
+| `POST` | `/api/auth/register` | `{ name, email, password }` → `{ token, user }` |
+| `POST` | `/api/auth/login` | `{ email, password }` → `{ token, user }` |
+| `GET`  | `/api/auth/me` | current user |
 
 ### Ideas
-
-#### GET /api/ideas
-Query params: `page, limit, industry, trendPhase, minScore, sort, search, featured`
-
-```json
-{
-  "ideas": [...],
-  "pagination": { "page": 1, "limit": 20, "total": 156, "pages": 8 }
-}
-```
-
-#### GET /api/ideas/:id
-Returns full idea object with evidence, execution plan, competitors.
-
-#### POST /api/ideas/generate (Pro+)
-```json
-{
-  "industry": "FinTech",
-  "fundingModel": "bootstrapped",
-  "customPrompt": "Focus on solo founders"
-}
-```
-Returns: Complete validated startup opportunity.
+| Method | Endpoint | Notes |
+|---|---|---|
+| `GET`  | `/api/ideas` | filters: `page, limit, industry, trendPhase, minScore, sort, search, featured` |
+| `GET`  | `/api/ideas/:id` | full idea — evidence, execution plan, competitors, pre-mortem |
+| `POST` | `/api/ideas/generate` | *(Pro+)* `{ industry, fundingModel, customPrompt }` → validated opportunity |
 
 ### Signals
+| Method | Endpoint | Notes |
+|---|---|---|
+| `GET`  | `/api/signals` | filters incl. `verification=verified` |
+| `GET`  | `/api/signals/heatmap` | aggregated by industry |
+| `GET`  | `/api/signals/meta/trending` | top 10 highest-scored recent signals |
+| `POST` | `/api/signals/ingest` | *(Founder)* trigger an ingestion cycle |
 
-#### GET /api/signals
-Query params: `page, limit, sourceType, minScore, startDate, endDate`
+### Trajectory *(the moat)*
+| Method | Endpoint | Notes |
+|---|---|---|
+| `GET` | `/api/trajectory/rising` | momentum leaderboard — *what's heating up* |
+| `GET` | `/api/trajectory/:ideaId` | full time-series + outcome ledger |
 
-#### GET /api/signals/heatmap
-Returns aggregated heatmap data by industry.
-
-#### GET /api/signals/meta/trending
-Returns top 10 highest-scored recent signals.
-
-### Trends
-
-#### GET /api/trends
-Returns: `{ byIndustry, byPhase, velocity }`
-
-### Watchlist (Auth required)
-
-#### GET /api/watchlist
-#### POST /api/watchlist — `{ name, description, keywords, industries }`
-#### POST /api/watchlist/:id/add-idea — `{ ideaId }`
-#### DELETE /api/watchlist/:id
-
-### Validation
-
-#### GET /api/validation/:id
-Returns full validation report with kill-switches, opportunity windows, PMF indicators.
+### Trends · Validation · Watchlist · Analytics
+| Method | Endpoint | Notes |
+|---|---|---|
+| `GET`  | `/api/trends` | `{ byIndustry, byPhase, velocity }` |
+| `GET`  | `/api/validation/:id` | kill-switches, opportunity windows, PMF indicators |
+| `GET`/`POST`/`DELETE` | `/api/watchlist` | saved ideas + alerts |
+| `GET`  | `/api/analytics` | overview stats |
 
 ---
 
-## Monetization Model
-
-| Tier | Price | Key Features |
-|------|-------|-------------|
-| Free | ₹0 | 5 ideas/mo, 20 signals/day, basic scoring |
-| Pro | ₹2,499/mo | 100 ideas, full evidence trail, MVP plans, watchlist |
-| Founder | ₹7,999/mo | Unlimited, VC reports, white-label, API key |
-| Enterprise | ₹8,00,000+/yr | Custom API, dedicated infra, SLA, white-label |
-
-**Additional Revenue Streams:**
-- VC Intelligence Reports (PDF, ₹24,999/report)
-- Trend Forecasting Reports (quarterly, ₹39,999)
-- API Licensing (enterprise, volume pricing)
-- White-label Dashboards (₹4,00,000–40,00,000 setup fee)
-
----
-
-## Scaling Plan
-
-```
-Phase 1 (0-1K users):   $0-500/mo infra
-├── Single backend instance
-├── MongoDB Atlas M10 ($57/mo)
-└── Redis Cloud 30MB (free)
-
-Phase 2 (1K-10K users): $500-3K/mo infra
-├── 3 backend instances + Nginx LB
-├── MongoDB Atlas M30 ($540/mo)
-├── Redis Cluster
-└── Separate AI worker (FastAPI + Celery)
-
-Phase 3 (10K-100K):     $3K-15K/mo infra
-├── Kubernetes orchestration
-├── Kafka for event streaming
-├── ClickHouse for analytics
-└── Pinecone for vector search
-
-Phase 4 ($10M ARR):     $15K+/mo infra
-├── Multi-region (US/EU/APAC)
-├── Custom fine-tuned models
-├── WebSocket real-time streaming
-└── SOC 2 Type II compliance
-```
-
----
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 nse/
 ├── backend/
-│   ├── src/
-│   │   ├── server.js              # Express app entry
-│   │   ├── config/
-│   │   │   ├── database.js        # MongoDB connection
-│   │   │   └── redis.js           # Redis + mock cache
-│   │   ├── middleware/
-│   │   │   ├── auth.js            # JWT + tier-based RBAC
-│   │   │   └── errorHandler.js    # Global error handler
-│   │   ├── models/
-│   │   │   ├── User.js            # User + tier system
-│   │   │   ├── Signal.js          # World signal schema
-│   │   │   ├── Idea.js            # Full opportunity schema
-│   │   │   ├── Cluster.js         # Problem cluster schema
-│   │   │   └── Watchlist.js       # User watchlists
-│   │   ├── routes/
-│   │   │   ├── auth.js            # Register/login/me
-│   │   │   ├── ideas.js           # CRUD + AI generation
-│   │   │   ├── signals.js         # Signal feed + heatmap
-│   │   │   ├── clusters.js        # Cluster browsing
-│   │   │   ├── trends.js          # Trend analytics
-│   │   │   ├── watchlist.js       # User watchlists
-│   │   │   ├── validation.js      # Idea validation engine
-│   │   │   ├── users.js           # Profile + usage
-│   │   │   └── analytics.js       # Overview stats
-│   │   ├── services/
-│   │   │   ├── aiService.js       # OpenAI + mock generation
-│   │   │   ├── validationService.js # 5-factor scoring engine
-│   │   │   └── ingestionScheduler.js# Cron + data ingestion
-│   │   └── utils/
-│   │       └── logger.js          # Winston logger
-│   ├── Dockerfile
-│   └── package.json
+│   └── src/
+│       ├── server.js                # Express entry
+│       ├── config/                  # MongoDB + Redis
+│       ├── middleware/              # JWT auth (tier RBAC) + error handler
+│       ├── models/                  # User · Signal · Idea · Cluster · Watchlist · OpportunitySnapshot
+│       ├── routes/                  # auth · ideas · signals · trends · trajectory · validation · …
+│       └── services/
+│           ├── sources/             # rss.js · gdelt.js · reddit.js
+│           ├── embedding.js         # semantic fingerprint + cosine similarity
+│           ├── verification.js      # credibility + cross-source corroboration
+│           ├── nlp.js               # sentiment · industry · friction extraction
+│           ├── opportunitySynthesis.js  # signals → grounded opportunities
+│           ├── validationService.js # 5-factor scoring engine
+│           ├── trajectoryService.js # momentum + outcome ledger
+│           ├── marketIntel.js       # demand evidence
+│           ├── aiService.js         # OpenAI + mock generation
+│           └── ingestionScheduler.js# cron pipeline (every 15 min)
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── App.jsx                # Router + lazy loading
-│   │   ├── main.jsx               # React entry + providers
-│   │   ├── pages/
-│   │   │   ├── Landing.jsx        # Public landing page
-│   │   │   ├── Dashboard.jsx      # Main intelligence hub
-│   │   │   ├── Ideas.jsx          # Opportunity browser
-│   │   │   ├── IdeaDetail.jsx     # Full analysis + pivot slider
-│   │   │   ├── Builder.jsx        # AI generation + checklist
-│   │   │   ├── Signals.jsx        # Live signal feed
-│   │   │   ├── Watchlist.jsx      # Saved ideas + alerts
-│   │   │   ├── Login.jsx          # Auth pages
-│   │   │   └── Pricing.jsx        # Pricing tiers
-│   │   ├── components/
-│   │   │   └── common/
-│   │   │       ├── Layout.jsx     # Sidebar + topbar shell
-│   │   │       ├── CommandBar.jsx # ⌘K command palette
-│   │   │       └── ScoreRing.jsx  # Animated score ring
-│   │   ├── store/
-│   │   │   └── authStore.js       # Zustand auth state
-│   │   ├── utils/
-│   │   │   └── api.js             # Axios client + all APIs
-│   │   └── styles/
-│   │       └── globals.css        # Tailwind + custom vars
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── package.json
+│   └── src/
+│       ├── pages/                   # Landing · Dashboard · Ideas · IdeaDetail · Builder · Signals · Watchlist · Pricing · Login · Register
+│       ├── components/common/       # Layout · CommandBar (⌘K) · ScoreRing
+│       ├── store/authStore.js       # Zustand auth state
+│       └── utils/api.js             # Axios client
 │
-├── ai-engine/
-│   └── AI_PIPELINE.md             # Full pipeline documentation
-│
-├── database/
-│   └── SCHEMA.md                  # Full schema documentation
-│
-├── docker-compose.yml             # Full stack orchestration
-├── .env.example                   # Environment template
-└── README.md                      # This file
+├── ai-engine/AI_PIPELINE.md         # pipeline deep-dive
+├── database/SCHEMA.md               # schema docs
+├── docker-compose.yml               # full-stack orchestration
+└── .env.example
 ```
 
 ---
 
-## Environment Variables
+## 🔑 Environment Variables
 
 | Variable | Required | Description |
-|----------|----------|-------------|
-| `MONGODB_URI` | No* | MongoDB connection string (* uses mock if absent) |
-| `REDIS_URL` | No* | Redis connection string (* uses in-memory if absent) |
-| `JWT_SECRET` | Yes | Secret for JWT signing (use 256-bit random string) |
-| `OPENAI_API_KEY` | No* | OpenAI API key (* uses rich mock data if absent) |
-| `NEWS_API_KEY` | No | NewsAPI.org key for real signal ingestion |
-| `FRONTEND_URL` | No | CORS origin (default: http://localhost:5173) |
-| `PORT` | No | Backend port (default: 4000) |
+|---|---|---|
+| `MONGODB_URI` | **Yes** for persistence | MongoDB connection string |
+| `JWT_SECRET` | **Yes** | Secret for JWT signing (256-bit random string) |
+| `REDIS_URL` | No* | Redis connection (*falls back to in-memory cache) |
+| `OPENAI_API_KEY` | No* | Enables live GPT-4 generation (*uses real-signal synthesis + mock if absent) |
+| `FRONTEND_URL` | No | CORS origin (default `http://localhost:5173`) |
+| `PORT` | No | Backend port (default `4000`) |
 
 ---
 
-## Demo Credentials
+## 💰 Monetization
 
-The app auto-seeds with demo data. Register any account to explore:
+| Tier | Price | Highlights |
+|---|---|---|
+| **Free** | ₹0 | 5 ideas/mo · 20 signals/day · basic scoring |
+| **Pro** | ₹2,499/mo | 100 ideas · full evidence trail · MVP plans · watchlist |
+| **Founder** | ₹7,999/mo | Unlimited · VC reports · manual ingest · API key |
+| **Enterprise** | ₹8,00,000+/yr | Custom API · dedicated infra · SLA · white-label |
+
+**Additional streams:** VC Intelligence Reports (₹24,999) · Quarterly Trend Forecasts (₹39,999) · API licensing · white-label dashboards.
+
+---
+
+## 📈 Scaling Roadmap
+
 ```
-Email: any valid email
-Password: minimum 8 characters
+Phase 1 (0–1K users) ........ single instance · Atlas M10 · Redis free tier
+Phase 2 (1K–10K)  ........... 3 instances + Nginx LB · Atlas M30 · dedicated AI worker
+Phase 3 (10K–100K) .......... Kubernetes · event streaming · analytics store · vector DB
+Phase 4 ($10M ARR) .......... multi-region · fine-tuned models · realtime WS · SOC 2 Type II
 ```
 
-Or use the "Demo Account" button on the login page.
+---
+
+## 🤝 Contributing
+
+Issues and PRs welcome. Fork → branch → PR. Run `npm run dev` and ensure the backend `/health` check is green before submitting.
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE).
+
+<div align="center">
 
 ---
 
-## License
+**NSE — built for founders who want to move faster than the market.**
 
-MIT License — See LICENSE file for details.
+⭐ Star the repo if this sparked an idea.
 
----
-
-*NSE — Built for founders who want to move faster than the market.*
+</div>
